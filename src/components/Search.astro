@@ -1,0 +1,26 @@
+---
+// Pagefind search component
+// Searches both content and tags (via data-pagefind-meta)
+---
+
+<div id="search" class="search-container"></div>
+
+<script is:inline>
+  window.addEventListener('DOMContentLoaded', () => {
+    new PagefindUI({
+      element: '#search',
+      showSubResults: true,
+      showImages: true,
+      excerptLength: 15,
+      translations: {
+        placeholder: 'Search posts and tags...',
+      },
+    });
+  });
+</script>
+
+<style>
+  .search-container {
+    margin: 1rem 0 2rem;
+  }
+</style>

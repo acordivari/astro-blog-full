@@ -1,0 +1,67 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="About - Blog26" description="Learn more about Blog26">
+  <article class="about">
+    <h1>About</h1>
+
+    <p>
+      Welcome to Blog26, a space dedicated to fashion, style, and personal reflections.
+    </p>
+
+    <p>
+      Here you'll find honest reviews of fashion items, brands, and trends,
+      along with personal essays on style and self-expression.
+    </p>
+
+    <h2>Sections</h2>
+
+    <ul>
+      <li><strong>Reviews</strong> - In-depth reviews of clothing, accessories, and brands with searchable tags</li>
+      <li><strong>Reflections</strong> - Personal thoughts on fashion, style, and industry trends</li>
+    </ul>
+
+    <h2>Contact</h2>
+
+    <p>
+      Get in touch at <a href="mailto:hello@blog26.com">hello@blog26.com</a>
+    </p>
+  </article>
+</BaseLayout>
+
+<style>
+  .about {
+    max-width: 65ch;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  p {
+    margin-bottom: 1rem;
+    line-height: 1.8;
+  }
+
+  ul {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+
+  li {
+    margin-bottom: 0.5rem;
+  }
+
+  a {
+    color: var(--color-accent);
+  }
+</style>

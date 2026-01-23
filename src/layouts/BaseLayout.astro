@@ -1,0 +1,147 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+}
+
+const { title, description = 'A fashion blog', image } = Astro.props;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- SEO -->
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL} />
+    {image && <meta property="og:image" content={new URL(image, Astro.site)} />}
+
+    <!-- Pagefind Search -->
+    <link href="/pagefind/pagefind-ui.css" rel="stylesheet" />
+    <script is:inline src="/pagefind/pagefind-ui.js"></script>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <a href="/" class="logo">Blog26</a>
+        <ul>
+          <li><a href="/reviews">Reviews</a></li>
+          <li><a href="/reflections">Reflections</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer>
+      <p>&copy; {new Date().getFullYear()} Blog26. All rights reserved.</p>
+    </footer>
+
+    <style is:global>
+      :root {
+        --color-bg: #fafafa;
+        --color-text: #1a1a1a;
+        --color-accent: #8b5cf6;
+        --color-muted: #6b7280;
+        --font-sans: system-ui, -apple-system, sans-serif;
+        --font-serif: Georgia, serif;
+        --max-width: 1200px;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        font-family: var(--font-sans);
+        background: var(--color-bg);
+        color: var(--color-text);
+        line-height: 1.6;
+      }
+
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      header {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 1rem 2rem;
+      }
+
+      nav {
+        max-width: var(--max-width);
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-decoration: none;
+        color: var(--color-text);
+      }
+
+      nav ul {
+        display: flex;
+        gap: 2rem;
+        list-style: none;
+      }
+
+      nav a {
+        color: var(--color-text);
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      nav a:hover {
+        color: var(--color-accent);
+      }
+
+      main {
+        flex: 1;
+        max-width: var(--max-width);
+        margin: 0 auto;
+        padding: 2rem;
+        width: 100%;
+      }
+
+      footer {
+        border-top: 1px solid #e5e7eb;
+        padding: 2rem;
+        text-align: center;
+        color: var(--color-muted);
+      }
+
+      img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      /* Pagefind overrides */
+      .pagefind-ui__form {
+        margin-bottom: 2rem;
+      }
+    </style>
+  </body>
+</html>

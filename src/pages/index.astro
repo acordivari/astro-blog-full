@@ -1,0 +1,149 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Search from '../components/Search.astro';
+import { getCollection } from 'astro:content';
+
+const reviews = await getCollection('reviews', ({ data }) => !data.draft);
+const reflections = await getCollection('reflections', ({ data }) => !data.draft);
+
+const latestReviews = reviews
+  .sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf())
+  .slice(0, 3);
+
+const latestReflections = reflections
+  .sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf())
+  .slice(0, 3);
+---
+
+<BaseLayout title="Blog26 - Fashion & Style">
+  <section class="hero">
+    <h1>Welcome to Blog26</h1>
+    <p>Fashion reviews, reflections, and style insights.</p>
+  </section>
+
+  <Search />
+
+  {latestReviews.length > 0 && (
+    <section class="section">
+      <h2>Latest Reviews</h2>
+      <div class="post-grid">
+        {latestReviews.map((post) => (
+          <article class="post-card">
+            <a href={`/reviews/${post.slug}`}>
+              <h3>{post.data.title}</h3>
+              <p>{post.data.description}</p>
+              <time datetime={post.data.publishDate.toISOString()}>
+                {post.data.publishDate.toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </time>
+            </a>
+          </article>
+        ))}
+      </div>
+      <a href="/reviews" class="view-all">View all reviews &rarr;</a>
+    </section>
+  )}
+
+  {latestReflections.length > 0 && (
+    <section class="section">
+      <h2>Latest Reflections</h2>
+      <div class="post-grid">
+        {latestReflections.map((post) => (
+          <article class="post-card">
+            <a href={`/reflections/${post.slug}`}>
+              <h3>{post.data.title}</h3>
+              <p>{post.data.description}</p>
+              <time datetime={post.data.publishDate.toISOString()}>
+                {post.data.publishDate.toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </time>
+            </a>
+          </article>
+        ))}
+      </div>
+      <a href="/reflections" class="view-all">View all reflections &rarr;</a>
+    </section>
+  )}
+</BaseLayout>
+
+<style>
+  .hero {
+    text-align: center;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+  }
+
+  .hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .hero p {
+    color: var(--color-muted);
+    font-size: 1.25rem;
+  }
+
+  .section {
+    margin-bottom: 3rem;
+  }
+
+  .section h2 {
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+  }
+
+  .post-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .post-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+
+  .post-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .post-card a {
+    display: block;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .post-card h3 {
+    margin-bottom: 0.5rem;
+  }
+
+  .post-card p {
+    color: var(--color-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .post-card time {
+    font-size: 0.875rem;
+    color: var(--color-muted);
+  }
+
+  .view-all {
+    display: inline-block;
+    margin-top: 1rem;
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .view-all:hover {
+    text-decoration: underline;
+  }
+</style>

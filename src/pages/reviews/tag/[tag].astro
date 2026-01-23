@@ -1,0 +1,143 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import TagList from '../../../components/TagList.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const reviews = await getCollection('reviews', ({ data }) => !data.draft);
+  const allTags = [...new Set(reviews.flatMap((post) => post.data.tags))];
+
+  return allTags.map((tag) => ({
+    params: { tag },
+    props: {
+      tag,
+      posts: reviews.filter((post) => post.data.tags.includes(tag)),
+    },
+  }));
+}
+
+const { tag, posts } = Astro.props;
+const sortedPosts = posts.sort(
+  (a: any, b: any) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf()
+);
+
+// Get all tags for navigation
+const allReviews = await getCollection('reviews', ({ data }) => !data.draft);
+const allTags = [...new Set(allReviews.flatMap((post) => post.data.tags))].sort();
+---
+
+<BaseLayout title={`${tag} - Reviews - Blog26`} description={`Reviews tagged with ${tag}`}>
+  <h1>Tag: {tag}</h1>
+  <p class="intro">{posts.length} review{posts.length !== 1 ? 's' : ''} tagged with "{tag}"</p>
+
+  <section class="all-tags">
+    <h2>All Tags</h2>
+    <TagList tags={allTags} />
+  </section>
+
+  <section class="posts">
+    {sortedPosts.map((post: any) => (
+      <article class="post">
+        <a href={`/reviews/${post.slug}`}>
+          <h2>{post.data.title}</h2>
+          <p>{post.data.description}</p>
+          <div class="meta">
+            <time datetime={post.data.publishDate.toISOString()}>
+              {post.data.publishDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </time>
+            {post.data.brand && <span class="brand">{post.data.brand}</span>}
+          </div>
+        </a>
+      </article>
+    ))}
+  </section>
+
+  <nav class="back">
+    <a href="/reviews">&larr; Back to all Reviews</a>
+  </nav>
+</BaseLayout>
+
+<style>
+  h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .intro {
+    color: var(--color-muted);
+    margin-bottom: 2rem;
+  }
+
+  .all-tags {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .all-tags h2 {
+    font-size: 1rem;
+    color: var(--color-muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .posts {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .post {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    transition: box-shadow 0.2s;
+  }
+
+  .post:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .post a {
+    display: block;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .post h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .post p {
+    color: var(--color-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: var(--color-muted);
+  }
+
+  .brand {
+    font-weight: 500;
+  }
+
+  .back {
+    margin-top: 2rem;
+  }
+
+  .back a {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .back a:hover {
+    text-decoration: underline;
+  }
+</style>
