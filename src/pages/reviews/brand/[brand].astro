@@ -28,11 +28,47 @@ const sortedPosts = posts.sort(
 // Get all brands that have reviews for navigation
 const allReviews = await getCollection('reviews', ({ data }) => !data.draft);
 const brandsWithReviews = [...new Set(allReviews.map((post) => post.data.brand).filter(Boolean))] as string[];
+
+// Calculate brand summary stats
+const ratings = posts.map((p: any) => p.data.rating).filter(Boolean) as number[];
+const avgRating = ratings.length > 0 ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length : null;
+const allTags = posts.flatMap((p: any) => p.data.tags);
+const tagCounts = allTags.reduce((acc: Record<string, number>, tag: string) => {
+  acc[tag] = (acc[tag] || 0) + 1;
+  return acc;
+}, {});
+const topTags = Object.entries(tagCounts)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 5)
+  .map(([tag]) => tag);
 ---
 
 <BaseLayout title={`${brandName} - Reviews - Blog26`} description={`Reviews of ${brandName} products`}>
-  <h1>{brandName}</h1>
-  <p class="intro">{posts.length} review{posts.length !== 1 ? 's' : ''}</p>
+  <header class="brand-header">
+    <h1>{brandName}</h1>
+    <div class="brand-summary">
+      <div class="stat">
+        <span class="stat-value">{posts.length}</span>
+        <span class="stat-label">review{posts.length !== 1 ? 's' : ''}</span>
+      </div>
+      {avgRating && (
+        <div class="stat">
+          <span class="stat-value">
+            <span class="stars">{'★'.repeat(Math.round(avgRating))}</span>
+            {avgRating.toFixed(1)}
+          </span>
+          <span class="stat-label">avg rating</span>
+        </div>
+      )}
+    </div>
+    {topTags.length > 0 && (
+      <div class="top-tags">
+        {topTags.map((tag) => (
+          <a href={`/reviews/tag/${tag}`} class="top-tag">{tag}</a>
+        ))}
+      </div>
+    )}
+  </header>
 
   <section class="all-brands">
     <h2>All Brands</h2>
@@ -40,28 +76,35 @@ const brandsWithReviews = [...new Set(allReviews.map((post) => post.data.brand).
   </section>
 
   {sortedPosts.length > 0 ? (
-    <section class="posts">
+    <section class="card-grid">
       {sortedPosts.map((post: any) => (
-        <article class="post">
+        <article class="card">
           <a href={`/reviews/${post.slug}`}>
-            <h2>{post.data.title}</h2>
-            <p>{post.data.description}</p>
-            <div class="meta">
+            {post.data.image ? (
+              <div class="card-image">
+                <img src={post.data.image} alt={post.data.imageAlt || post.data.title} />
+              </div>
+            ) : (
+              <div class="card-image card-image-placeholder">
+                <span>{brandName.charAt(0)}</span>
+              </div>
+            )}
+            <div class="card-content">
+              <h2>{post.data.title}</h2>
+              {post.data.rating && (
+                <div class="card-rating">
+                  <span class="stars">{'★'.repeat(post.data.rating)}{'☆'.repeat(5 - post.data.rating)}</span>
+                </div>
+              )}
+              <p class="card-excerpt">{post.data.description}</p>
               <time datetime={post.data.publishDate.toISOString()}>
                 {post.data.publishDate.toLocaleDateString('en-US', {
                   year: 'numeric',
-                  month: 'long',
+                  month: 'short',
                   day: 'numeric',
                 })}
               </time>
             </div>
-            {post.data.tags.length > 0 && (
-              <ul class="tags">
-                {post.data.tags.map((tag: string) => (
-                  <li class="tag">{tag}</li>
-                ))}
-              </ul>
-            )}
           </a>
         </article>
       ))}
@@ -76,16 +119,65 @@ const brandsWithReviews = [...new Set(allReviews.map((post) => post.data.brand).
 </BaseLayout>
 
 <style>
-  h1 {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .intro {
-    color: var(--color-muted);
+  /* Brand Header */
+  .brand-header {
     margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
   }
 
+  .brand-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .brand-summary {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .stat {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  .stat-label {
+    color: var(--color-muted);
+    font-size: 0.875rem;
+  }
+
+  .stars {
+    color: #f59e0b;
+  }
+
+  .top-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .top-tag {
+    padding: 0.25rem 0.75rem;
+    background: #f3f4f6;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+
+  .top-tag:hover {
+    background: #e5e7eb;
+  }
+
+  /* All Brands Navigation */
   .all-brands {
     margin-bottom: 2rem;
     padding-bottom: 1.5rem;
@@ -98,62 +190,110 @@ const brandsWithReviews = [...new Set(allReviews.map((post) => post.data.brand).
     margin-bottom: 0.5rem;
   }
 
-  .posts {
-    display: flex;
-    flex-direction: column;
+  /* Card Grid */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
   }
 
-  .post {
+  .card {
     border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    transition: box-shadow 0.2s;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.2s;
   }
 
-  .post:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  .card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
   }
 
-  .post a {
+  .card a {
     display: block;
-    padding: 1.5rem;
     text-decoration: none;
     color: inherit;
   }
 
-  .post h2 {
-    font-size: 1.25rem;
+  .card-image {
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: #f3f4f6;
+  }
+
+  .card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .card-image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  }
+
+  .card-image-placeholder span {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #f9fafb;
+    opacity: 0.5;
+  }
+
+  .card-content {
+    padding: 1rem;
+  }
+
+  .card-content h2 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+
+  .card-rating {
     margin-bottom: 0.5rem;
   }
 
-  .post p {
-    color: var(--color-muted);
-    margin-bottom: 0.75rem;
-  }
-
-  .meta {
-    display: flex;
-    gap: 1rem;
+  .card-rating .stars {
     font-size: 0.875rem;
+  }
+
+  .card-excerpt {
     color: var(--color-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
     margin-bottom: 0.75rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
-  .tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    list-style: none;
-  }
-
-  .tag {
-    padding: 0.25rem 0.5rem;
-    background: #f3f4f6;
-    border-radius: 4px;
+  .card-content time {
     font-size: 0.75rem;
-    color: #6b7280;
+    color: var(--color-muted);
   }
 
+  /* Responsive */
+  @media (max-width: 900px) {
+    .card-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 560px) {
+    .card-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .brand-summary {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+  }
+
+  /* Empty State */
   .empty {
     color: var(--color-muted);
     padding: 2rem;
@@ -162,6 +302,7 @@ const brandsWithReviews = [...new Set(allReviews.map((post) => post.data.brand).
     border-radius: 8px;
   }
 
+  /* Back Link */
   .back {
     margin-top: 2rem;
   }
