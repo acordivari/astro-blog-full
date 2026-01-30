@@ -25,8 +25,8 @@ const { brands: brandNames } = Astro.props;
 
 <style>
   .brand-list {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 0.5rem;
     list-style: none;
     padding: 0;
@@ -34,17 +34,30 @@ const { brands: brandNames } = Astro.props;
   }
 
   .brand {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
+    display: block;
+    padding: 0.5rem 0.75rem;
     background: #1f2937;
-    border-radius: 9999px;
+    border-radius: 6px;
     font-size: 0.875rem;
     color: #f9fafb;
     text-decoration: none;
+    text-align: center;
     transition: background 0.2s;
   }
 
   .brand:hover {
     background: #374151;
+  }
+
+  @media (max-width: 768px) {
+    .brand-list {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .brand-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 </style>
