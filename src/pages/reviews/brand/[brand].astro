@@ -1,46 +1,48 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import Search from '../../components/Search.astro';
-import TagList from '../../components/TagList.astro';
-import BrandList from '../../components/BrandList.astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import BrandList from '../../../components/BrandList.astro';
 import { getCollection } from 'astro:content';
+import { brands, brandSlugs, getBrandName, type BrandSlug } from '../../../content/brands';
 
-const reviews = await getCollection('reviews', ({ data }) => !data.draft);
-const sortedReviews = reviews.sort(
-  (a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf()
+export async function getStaticPaths() {
+  const reviews = await getCollection('reviews', ({ data }) => !data.draft);
+
+  return brandSlugs.map((slug) => {
+    const brandName = getBrandName(slug);
+    return {
+      params: { brand: slug },
+      props: {
+        slug,
+        brandName,
+        posts: reviews.filter((post) => post.data.brand === brandName),
+      },
+    };
+  });
+}
+
+const { slug, brandName, posts } = Astro.props;
+const sortedPosts = posts.sort(
+  (a: any, b: any) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf()
 );
 
-// Get all unique tags
-const allTags = [...new Set(reviews.flatMap((post) => post.data.tags))].sort();
-
-// Get all brands that have reviews
-const allBrands = [...new Set(reviews.map((post) => post.data.brand).filter(Boolean))].sort() as string[];
+// Get all brands that have reviews for navigation
+const allReviews = await getCollection('reviews', ({ data }) => !data.draft);
+const brandsWithReviews = [...new Set(allReviews.map((post) => post.data.brand).filter(Boolean))] as string[];
 ---
 
-<BaseLayout title="Reviews - Blog26" description="Fashion and style reviews">
-  <h1>Reviews</h1>
-  <p class="intro">In-depth reviews of fashion items, brands, and trends.</p>
+<BaseLayout title={`${brandName} - Reviews - Blog26`} description={`Reviews of ${brandName} products`}>
+  <h1>{brandName}</h1>
+  <p class="intro">{posts.length} review{posts.length !== 1 ? 's' : ''}</p>
 
-  <Search />
+  <section class="all-brands">
+    <h2>All Brands</h2>
+    <BrandList brands={brandsWithReviews} />
+  </section>
 
-  {allBrands.length > 0 && (
-    <section class="brands-section">
-      <h2>Browse by Brand</h2>
-      <BrandList brands={allBrands} />
-    </section>
-  )}
-
-  {allTags.length > 0 && (
-    <section class="tags-section">
-      <h2>Browse by Tag</h2>
-      <TagList tags={allTags} />
-    </section>
-  )}
-
-  <section class="posts">
-    {sortedReviews.length > 0 ? (
-      sortedReviews.map((post) => (
-        <article class="post" data-pagefind-meta={`tags:${post.data.tags.join(', ')}${post.data.brand ? `, brand:${post.data.brand}` : ''}`}>
+  {sortedPosts.length > 0 ? (
+    <section class="posts">
+      {sortedPosts.map((post: any) => (
+        <article class="post">
           <a href={`/reviews/${post.slug}`}>
             <h2>{post.data.title}</h2>
             <p>{post.data.description}</p>
@@ -52,7 +54,6 @@ const allBrands = [...new Set(reviews.map((post) => post.data.brand).filter(Bool
                   day: 'numeric',
                 })}
               </time>
-              {post.data.brand && <span class="brand">{post.data.brand}</span>}
             </div>
             {post.data.tags.length > 0 && (
               <ul class="tags">
@@ -63,11 +64,15 @@ const allBrands = [...new Set(reviews.map((post) => post.data.brand).filter(Bool
             )}
           </a>
         </article>
-      ))
-    ) : (
-      <p class="empty">No reviews yet. Create your first review in <code>src/content/reviews/</code></p>
-    )}
-  </section>
+      ))}
+    </section>
+  ) : (
+    <p class="empty">No reviews for {brandName} yet.</p>
+  )}
+
+  <nav class="back">
+    <a href="/reviews">&larr; Back to all Reviews</a>
+  </nav>
 </BaseLayout>
 
 <style>
@@ -81,16 +86,16 @@ const allBrands = [...new Set(reviews.map((post) => post.data.brand).filter(Bool
     margin-bottom: 2rem;
   }
 
-  .brands-section,
-  .tags-section {
+  .all-brands {
     margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
   }
 
-  .brands-section h2,
-  .tags-section h2 {
+  .all-brands h2 {
     font-size: 1rem;
-    margin-bottom: 0.5rem;
     color: var(--color-muted);
+    margin-bottom: 0.5rem;
   }
 
   .posts {
@@ -134,10 +139,6 @@ const allBrands = [...new Set(reviews.map((post) => post.data.brand).filter(Bool
     margin-bottom: 0.75rem;
   }
 
-  .brand {
-    font-weight: 500;
-  }
-
   .tags {
     display: flex;
     flex-wrap: wrap;
@@ -161,9 +162,16 @@ const allBrands = [...new Set(reviews.map((post) => post.data.brand).filter(Bool
     border-radius: 8px;
   }
 
-  .empty code {
-    background: #e5e7eb;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
+  .back {
+    margin-top: 2rem;
+  }
+
+  .back a {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .back a:hover {
+    text-decoration: underline;
   }
 </style>

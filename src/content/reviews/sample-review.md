@@ -3,7 +3,7 @@ title: "Sample Review: Classic Leather Jacket"
 description: "A detailed review of a timeless leather jacket that belongs in every wardrobe."
 publishDate: 2026-01-22
 tags: ["leather", "outerwear", "classic", "investment-piece"]
-brand: "Sample Brand"
+brand: "Acronym"
 rating: 4
 image: "/images/sample-jacket.jpg"
 imageAlt: "Classic black leather jacket"

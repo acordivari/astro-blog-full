@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TagList from '../../components/TagList.astro';
 import { getCollection } from 'astro:content';
+import { getBrandSlug } from '../../content/brands';
 
 export async function getStaticPaths() {
   const reviews = await getCollection('reviews');
@@ -13,6 +14,7 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props;
 const { Content } = await post.render();
+const brandSlug = post.data.brand ? getBrandSlug(post.data.brand) : undefined;
 ---
 
 <BaseLayout
@@ -20,7 +22,7 @@ const { Content } = await post.render();
   description={post.data.description}
   image={post.data.image}
 >
-  <article class="review" data-pagefind-body data-pagefind-meta={`tags:${post.data.tags.join(', ')}`}>
+  <article class="review" data-pagefind-body data-pagefind-meta={`tags:${post.data.tags.join(', ')}${post.data.brand ? `, brand:${post.data.brand}` : ''}`}>
     <header>
       <h1>{post.data.title}</h1>
       <div class="meta">
@@ -31,7 +33,9 @@ const { Content } = await post.render();
             day: 'numeric',
           })}
         </time>
-        {post.data.brand && <span class="brand">{post.data.brand}</span>}
+        {post.data.brand && brandSlug && (
+          <a href={`/reviews/brand/${brandSlug}`} class="brand">{post.data.brand}</a>
+        )}
         {post.data.rating && (
           <span class="rating">{'★'.repeat(post.data.rating)}{'☆'.repeat(5 - post.data.rating)}</span>
         )}
@@ -83,6 +87,12 @@ const { Content } = await post.render();
 
   .brand {
     font-weight: 500;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .brand:hover {
+    text-decoration: underline;
   }
 
   .rating {

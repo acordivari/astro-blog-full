@@ -1,0 +1,50 @@
+---
+import { brands, getBrandSlug } from '../content/brands';
+
+interface Props {
+  brands: string[];
+}
+
+const { brands: brandNames } = Astro.props;
+---
+
+{brandNames.length > 0 && (
+  <ul class="brand-list">
+    {brandNames.map((name) => {
+      const slug = getBrandSlug(name);
+      return slug ? (
+        <li>
+          <a href={`/reviews/brand/${slug}`} class="brand">
+            {name}
+          </a>
+        </li>
+      ) : null;
+    })}
+  </ul>
+)}
+
+<style>
+  .brand-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+  }
+
+  .brand {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: #1f2937;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    color: #f9fafb;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+
+  .brand:hover {
+    background: #374151;
+  }
+</style>
