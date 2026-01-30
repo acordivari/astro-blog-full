@@ -1,16 +1,17 @@
 ---
 interface Props {
   tags: string[];
+  basePath?: string;
 }
 
-const { tags } = Astro.props;
+const { tags, basePath = '/reviews/tag' } = Astro.props;
 ---
 
 {tags.length > 0 && (
   <ul class="tag-list">
     {tags.map((tag) => (
       <li>
-        <a href={`/reviews/tag/${tag}`} class="tag">
+        <a href={`${basePath}/${tag}`} class="tag">
           {tag}
         </a>
       </li>

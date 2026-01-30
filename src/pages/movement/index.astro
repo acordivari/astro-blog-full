@@ -1,0 +1,148 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Search from '../../components/Search.astro';
+import TagList from '../../components/TagList.astro';
+import { getCollection } from 'astro:content';
+
+const posts = await getCollection('movement', ({ data }) => !data.draft);
+const sortedPosts = posts.sort(
+  (a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf()
+);
+
+const allTags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
+---
+
+<BaseLayout title="Movement - Blog26" description="Thoughts on fitness, exercise, and physical practice">
+  <h1>Movement</h1>
+  <p class="intro">Exploring fitness, exercise, and physical practice.</p>
+
+  <Search />
+
+  {allTags.length > 0 && (
+    <section class="tags-section">
+      <h2>Browse by Tag</h2>
+      <TagList tags={allTags} basePath="/movement/tag" />
+    </section>
+  )}
+
+  <section class="posts">
+    {sortedPosts.length > 0 ? (
+      sortedPosts.map((post) => (
+        <article class="post">
+          <a href={`/movement/${post.slug}`}>
+            <h2>{post.data.title}</h2>
+            <p>{post.data.description}</p>
+            <div class="meta">
+              <time datetime={post.data.publishDate.toISOString()}>
+                {post.data.publishDate.toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </time>
+            </div>
+            {post.data.tags.length > 0 && (
+              <ul class="tags">
+                {post.data.tags.map((tag: string) => (
+                  <li class="tag">{tag}</li>
+                ))}
+              </ul>
+            )}
+          </a>
+        </article>
+      ))
+    ) : (
+      <p class="empty">No posts yet. Create your first in <code>src/content/movement/</code></p>
+    )}
+  </section>
+</BaseLayout>
+
+<style>
+  h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .intro {
+    color: var(--color-muted);
+    margin-bottom: 2rem;
+  }
+
+  .tags-section {
+    margin-bottom: 2rem;
+  }
+
+  .tags-section h2 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--color-muted);
+  }
+
+  .posts {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .post {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    transition: box-shadow 0.2s;
+  }
+
+  .post:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .post a {
+    display: block;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .post h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .post p {
+    color: var(--color-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .meta {
+    font-size: 0.875rem;
+    color: var(--color-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+  }
+
+  .tag {
+    padding: 0.25rem 0.5rem;
+    background: #f3f4f6;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: #6b7280;
+  }
+
+  .empty {
+    color: var(--color-muted);
+    padding: 2rem;
+    text-align: center;
+    background: #f9fafb;
+    border-radius: 8px;
+  }
+
+  .empty code {
+    background: #e5e7eb;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+  }
+</style>
