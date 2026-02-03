@@ -3,6 +3,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { getRecentPlaylists } from '../content/music';
 
 const playlists = getRecentPlaylists(10);
+
+// Force compact player (no large header artwork) by setting visual=false
+function getCompactEmbedUrl(url: string): string {
+  const parsed = new URL(url);
+  parsed.searchParams.set('visual', 'false');
+  return parsed.toString();
+}
 ---
 
 <BaseLayout title="Music - Blog26" description="Recent listens and mixes">
@@ -25,7 +32,7 @@ const playlists = getRecentPlaylists(10);
               scrolling="no"
               frameborder="no"
               allow="autoplay"
-              src={playlist.embedUrl}
+              src={getCompactEmbedUrl(playlist.embedUrl)}
             ></iframe>
           </div>
         </article>
