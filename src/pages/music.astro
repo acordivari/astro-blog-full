@@ -1,30 +1,31 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getRecentTracks } from '../content/music';
+import { getRecentPlaylists } from '../content/music';
 
-const recentTracks = getRecentTracks(10);
+const playlists = getRecentPlaylists(10);
 ---
 
 <BaseLayout title="Music - Blog26" description="Recent listens and mixes">
   <h1>Music</h1>
   <p class="intro">Recent listens, mixes, and sounds.</p>
 
-  {recentTracks.length > 0 ? (
-    <section class="tracks">
-      {recentTracks.map((track) => (
-        <article class="track">
-          <div class="track-info">
-            <h2>{track.title}</h2>
-            <p class="artist">{track.artist}</p>
+  {playlists.length > 0 ? (
+    <section class="playlists">
+      {playlists.map((playlist) => (
+        <article class="playlist">
+          <div class="playlist-info">
+            <h2>{playlist.name}</h2>
+            {playlist.artist && <p class="artist">{playlist.artist}</p>}
+            {playlist.description && <p class="description">{playlist.description}</p>}
           </div>
           <div class="player">
             <iframe
               width="100%"
-              height="166"
+              height="300"
               scrolling="no"
               frameborder="no"
               allow="autoplay"
-              src={`${track.embedUrl}&color=%238b5cf6&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false`}
+              src={playlist.embedUrl}
             ></iframe>
           </div>
         </article>
@@ -32,16 +33,16 @@ const recentTracks = getRecentTracks(10);
     </section>
   ) : (
     <section class="empty-state">
-      <p>No tracks added yet.</p>
-      <p class="hint">Add tracks to <code>src/content/music.ts</code> to display them here.</p>
+      <p>No playlists added yet.</p>
+      <p class="hint">Add playlists to <code>src/content/music.ts</code> to display them here.</p>
 
       <div class="instructions">
-        <h2>How to add tracks:</h2>
+        <h2>How to add playlists:</h2>
         <ol>
-          <li>Go to a track or playlist on Soundcloud</li>
+          <li>Go to a playlist on Soundcloud</li>
           <li>Click <strong>Share</strong> &rarr; <strong>Embed</strong></li>
           <li>Copy the <code>src</code> URL from the iframe code</li>
-          <li>Add it to the tracks array in <code>src/content/music.ts</code></li>
+          <li>Add it to the playlists array in <code>src/content/music.ts</code></li>
         </ol>
       </div>
     </section>
@@ -59,25 +60,25 @@ const recentTracks = getRecentTracks(10);
     margin-bottom: 2rem;
   }
 
-  .tracks {
+  .playlists {
     display: flex;
     flex-direction: column;
     gap: 2rem;
   }
 
-  .track {
+  .playlist {
     border: 1px solid #e5e7eb;
     border-radius: 12px;
     overflow: hidden;
   }
 
-  .track-info {
+  .playlist-info {
     padding: 1rem 1.5rem;
     background: #f9fafb;
     border-bottom: 1px solid #e5e7eb;
   }
 
-  .track-info h2 {
+  .playlist-info h2 {
     font-size: 1.125rem;
     margin-bottom: 0.25rem;
   }
@@ -85,6 +86,12 @@ const recentTracks = getRecentTracks(10);
   .artist {
     color: var(--color-muted);
     font-size: 0.875rem;
+  }
+
+  .description {
+    color: var(--color-muted);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
   }
 
   .player {
