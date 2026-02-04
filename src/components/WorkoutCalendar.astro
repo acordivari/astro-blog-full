@@ -1,0 +1,385 @@
+---
+// WorkoutCalendar — fetches workout data from a public Google Sheet
+// and renders an interactive month-view calendar (all client-side).
+---
+
+<div id="workout-calendar">
+  <div id="wc-loading" class="wc-message">Loading workout data...</div>
+  <div id="wc-error" class="wc-message wc-error" style="display:none"></div>
+
+  <div id="wc-calendar" style="display:none">
+    <nav class="wc-nav">
+      <button id="wc-prev" aria-label="Previous month">&larr;</button>
+      <span id="wc-month-label"></span>
+      <button id="wc-next" aria-label="Next month">&rarr;</button>
+    </nav>
+
+    <div class="wc-day-headers">
+      <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+    </div>
+
+    <div id="wc-grid" class="wc-grid"></div>
+
+    <div id="wc-detail" class="wc-detail" style="display:none">
+      <div class="wc-detail-header">
+        <strong id="wc-detail-date"></strong>
+        <button id="wc-detail-close" aria-label="Close">&times;</button>
+      </div>
+      <pre id="wc-detail-text"></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SHEET_URL =
+    'https://docs.google.com/spreadsheets/d/1hW4Rid3jkdyc54qQfsZGUROKRQ6Zh5lMlhRZ7UdPQCI/gviz/tq?tqx=out:csv';
+
+  /* ── CSV parser (handles quoted multi-line fields) ── */
+  function parseCSV(text: string): string[][] {
+    const rows: string[][] = [];
+    let i = 0;
+    while (i < text.length) {
+      const row: string[] = [];
+      while (i < text.length) {
+        let cell = '';
+        if (text[i] === '"') {
+          i++; // skip opening quote
+          while (i < text.length) {
+            if (text[i] === '"') {
+              if (i + 1 < text.length && text[i + 1] === '"') {
+                cell += '"';
+                i += 2;
+              } else {
+                i++; // skip closing quote
+                break;
+              }
+            } else {
+              cell += text[i++];
+            }
+          }
+        } else {
+          while (i < text.length && text[i] !== ',' && text[i] !== '\n' && text[i] !== '\r') {
+            cell += text[i++];
+          }
+        }
+        row.push(cell);
+        if (i < text.length && text[i] === ',') {
+          i++;
+        } else {
+          break;
+        }
+      }
+      // skip line endings
+      while (i < text.length && (text[i] === '\r' || text[i] === '\n')) i++;
+      rows.push(row);
+    }
+    return rows;
+  }
+
+  /* ── Date helpers ── */
+  function toKey(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  const MONTHS = [
+    'January','February','March','April','May','June',
+    'July','August','September','October','November','December',
+  ];
+
+  /* ── State ── */
+  let workouts: Map<string, string> = new Map();
+  let viewYear: number;
+  let viewMonth: number; // 0-based
+
+  /* ── DOM refs ── */
+  const elLoading  = document.getElementById('wc-loading')!;
+  const elError    = document.getElementById('wc-error')!;
+  const elCalendar = document.getElementById('wc-calendar')!;
+  const elLabel    = document.getElementById('wc-month-label')!;
+  const elGrid     = document.getElementById('wc-grid')!;
+  const elDetail   = document.getElementById('wc-detail')!;
+  const elDetailDate = document.getElementById('wc-detail-date')!;
+  const elDetailText = document.getElementById('wc-detail-text')!;
+
+  /* ── Render the calendar grid for viewYear/viewMonth ── */
+  function render() {
+    elLabel.textContent = `${MONTHS[viewMonth]} ${viewYear}`;
+    elGrid.innerHTML = '';
+    elDetail.style.display = 'none';
+
+    const first = new Date(viewYear, viewMonth, 1);
+    const startDow = first.getDay(); // 0=Sun
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const todayKey = toKey(new Date());
+
+    // leading empties
+    for (let i = 0; i < startDow; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'wc-cell wc-empty';
+      elGrid.appendChild(cell);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = toKey(new Date(viewYear, viewMonth, d));
+      const workout = workouts.get(key);
+      const cell = document.createElement('div');
+      cell.className = 'wc-cell';
+
+      if (key === todayKey) cell.classList.add('wc-today');
+
+      const num = document.createElement('span');
+      num.className = 'wc-day-num';
+      num.textContent = String(d);
+      cell.appendChild(num);
+
+      if (workout) {
+        cell.classList.add('wc-has-workout');
+        const preview = document.createElement('span');
+        preview.className = 'wc-preview';
+        preview.textContent = workout;
+        cell.appendChild(preview);
+        cell.addEventListener('click', () => showDetail(key, workout));
+      }
+
+      elGrid.appendChild(cell);
+    }
+  }
+
+  function showDetail(key: string, text: string) {
+    const d = new Date(key + 'T00:00:00');
+    elDetailDate.textContent = d.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    elDetailText.textContent = text;
+    elDetail.style.display = 'block';
+  }
+
+  /* ── Navigation ── */
+  document.getElementById('wc-prev')!.addEventListener('click', () => {
+    viewMonth--;
+    if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+    render();
+  });
+  document.getElementById('wc-next')!.addEventListener('click', () => {
+    viewMonth++;
+    if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+    render();
+  });
+  document.getElementById('wc-detail-close')!.addEventListener('click', () => {
+    elDetail.style.display = 'none';
+  });
+
+  /* ── Fetch & init ── */
+  async function init() {
+    try {
+      const res = await fetch(SHEET_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const csv = await res.text();
+      const rows = parseCSV(csv);
+
+      const currentYear = new Date().getFullYear();
+
+      // Skip header row (index 0)
+      for (let r = 1; r < rows.length; r++) {
+        const dateStr = (rows[r][0] || '').trim();
+        const workout = (rows[r][1] || '').trim();
+        if (!dateStr || !workout) continue;
+        const parsed = new Date(`${dateStr}, ${currentYear}`);
+        if (isNaN(parsed.getTime())) continue;
+        workouts.set(toKey(parsed), workout);
+      }
+
+      const now = new Date();
+      viewYear = now.getFullYear();
+      viewMonth = now.getMonth();
+
+      elLoading.style.display = 'none';
+      elCalendar.style.display = 'block';
+      render();
+    } catch (err) {
+      elLoading.style.display = 'none';
+      elError.style.display = 'block';
+      elError.textContent = 'Unable to load workout data. Please try again later.';
+    }
+  }
+
+  init();
+</script>
+
+<style>
+  #workout-calendar {
+    margin: 2rem 0;
+  }
+
+  .wc-message {
+    color: var(--color-muted);
+    padding: 2rem;
+    text-align: center;
+    background: #f9fafb;
+    border-radius: 8px;
+  }
+
+  .wc-error {
+    color: #b91c1c;
+    background: #fef2f2;
+  }
+
+  /* ── Navigation ── */
+  .wc-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .wc-nav button {
+    background: none;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.4rem 0.75rem;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--color-text);
+    transition: background 0.2s;
+  }
+
+  .wc-nav button:hover {
+    background: #f3f4f6;
+  }
+
+  .wc-nav span {
+    font-weight: 600;
+    font-size: 1.125rem;
+  }
+
+  /* ── Day-of-week headers ── */
+  .wc-day-headers {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    margin-bottom: 0.25rem;
+  }
+
+  /* ── Grid ── */
+  .wc-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+
+  .wc-cell {
+    min-height: 5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.8rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .wc-empty {
+    background: #f9fafb;
+    border-color: transparent;
+  }
+
+  .wc-day-num {
+    font-weight: 600;
+    font-size: 0.75rem;
+    display: block;
+    margin-bottom: 0.15rem;
+  }
+
+  .wc-has-workout {
+    background: #f5f3ff;
+    border-left: 3px solid var(--color-accent);
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+  }
+
+  .wc-has-workout:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .wc-today {
+    box-shadow: inset 0 0 0 2px var(--color-accent);
+  }
+
+  .wc-preview {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 0.7rem;
+    line-height: 1.35;
+    color: var(--color-muted);
+  }
+
+  /* ── Detail panel ── */
+  .wc-detail {
+    margin-top: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+
+  .wc-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .wc-detail-header strong {
+    font-size: 1rem;
+  }
+
+  .wc-detail-header button {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    color: var(--color-muted);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+
+  .wc-detail-header button:hover {
+    background: #f3f4f6;
+  }
+
+  #wc-detail-text {
+    white-space: pre-wrap;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    margin: 0;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .wc-cell {
+      min-height: 3.5rem;
+      padding: 0.25rem;
+    }
+
+    .wc-preview {
+      -webkit-line-clamp: 2;
+      font-size: 0.6rem;
+    }
+
+    .wc-day-headers span {
+      font-size: 0.65rem;
+    }
+  }
+</style>

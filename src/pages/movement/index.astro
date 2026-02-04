@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Search from '../../components/Search.astro';
+import WorkoutCalendar from '../../components/WorkoutCalendar.astro';
 import TagList from '../../components/TagList.astro';
 import { getCollection } from 'astro:content';
 
@@ -17,6 +18,8 @@ const allTags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
   <p class="intro">Exploring fitness, exercise, and physical practice.</p>
 
   <Search />
+
+  <WorkoutCalendar />
 
   {allTags.length > 0 && (
     <section class="tags-section">
