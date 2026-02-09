@@ -1,6 +1,6 @@
 ---
 // WorkoutCalendar — fetches workout data from a public Google Sheet
-// and renders an interactive month-view calendar (all client-side).
+// and renders an interactive calendar with Calendar/List view toggle.
 ---
 
 <div id="workout-calendar">
@@ -8,24 +8,66 @@
   <div id="wc-error" class="wc-message wc-error" style="display:none"></div>
 
   <div id="wc-calendar" style="display:none">
-    <nav class="wc-nav">
-      <button id="wc-prev" aria-label="Previous month">&larr;</button>
-      <span id="wc-month-label"></span>
-      <button id="wc-next" aria-label="Next month">&rarr;</button>
-    </nav>
+    <!-- Header: View Toggle + Month Nav -->
+    <div class="wc-header">
+      <div class="wc-view-toggle">
+        <button id="wc-view-calendar" class="wc-view-btn active" aria-label="Calendar view">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span>Calendar</span>
+        </button>
+        <button id="wc-view-list" class="wc-view-btn" aria-label="List view">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+          <span>List</span>
+        </button>
+      </div>
 
-    <div class="wc-day-headers">
-      <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+      <nav class="wc-nav">
+        <button id="wc-prev" aria-label="Previous month">&larr;</button>
+        <span id="wc-month-label"></span>
+        <button id="wc-next" aria-label="Next month">&rarr;</button>
+      </nav>
     </div>
 
-    <div id="wc-grid" class="wc-grid"></div>
-
-    <div id="wc-detail" class="wc-detail" style="display:none">
-      <div class="wc-detail-header">
-        <strong id="wc-detail-date"></strong>
-        <button id="wc-detail-close" aria-label="Close">&times;</button>
+    <!-- Calendar View -->
+    <div id="wc-calendar-view">
+      <div class="wc-day-headers">
+        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
       </div>
-      <pre id="wc-detail-text"></pre>
+      <div id="wc-grid" class="wc-grid"></div>
+    </div>
+
+    <!-- List View -->
+    <div id="wc-list-view" style="display:none">
+      <div id="wc-list" class="wc-list"></div>
+      <p id="wc-list-empty" class="wc-list-empty" style="display:none">No workouts this month.</p>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="wc-modal" class="wc-modal" style="display:none">
+    <div class="wc-modal-backdrop"></div>
+    <div class="wc-modal-content">
+      <div class="wc-modal-header">
+        <button id="wc-modal-prev" class="wc-modal-nav" aria-label="Previous workout">&larr;</button>
+        <strong id="wc-modal-date"></strong>
+        <button id="wc-modal-next" class="wc-modal-nav" aria-label="Next workout">&rarr;</button>
+        <button id="wc-modal-close" class="wc-modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="wc-modal-body">
+        <pre id="wc-modal-text"></pre>
+      </div>
     </div>
   </div>
 </div>
@@ -43,14 +85,14 @@
       while (i < text.length) {
         let cell = '';
         if (text[i] === '"') {
-          i++; // skip opening quote
+          i++;
           while (i < text.length) {
             if (text[i] === '"') {
               if (i + 1 < text.length && text[i + 1] === '"') {
                 cell += '"';
                 i += 2;
               } else {
-                i++; // skip closing quote
+                i++;
                 break;
               }
             } else {
@@ -69,7 +111,6 @@
           break;
         }
       }
-      // skip line endings
       while (i < text.length && (text[i] === '\r' || text[i] === '\n')) i++;
       rows.push(row);
     }
@@ -84,6 +125,16 @@
     return `${y}-${m}-${day}`;
   }
 
+  function formatDate(key: string): string {
+    const d = new Date(key + 'T00:00:00');
+    return d.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  }
+
   const MONTHS = [
     'January','February','March','April','May','June',
     'July','August','September','October','November','December',
@@ -91,31 +142,45 @@
 
   /* ── State ── */
   let workouts: Map<string, string> = new Map();
+  let sortedKeys: string[] = []; // all workout keys sorted chronologically
   let viewYear: number;
-  let viewMonth: number; // 0-based
+  let viewMonth: number;
+  let currentView: 'calendar' | 'list' = 'calendar';
+  let currentModalKey: string | null = null;
 
   /* ── DOM refs ── */
-  const elLoading  = document.getElementById('wc-loading')!;
-  const elError    = document.getElementById('wc-error')!;
+  const elLoading = document.getElementById('wc-loading')!;
+  const elError = document.getElementById('wc-error')!;
   const elCalendar = document.getElementById('wc-calendar')!;
-  const elLabel    = document.getElementById('wc-month-label')!;
-  const elGrid     = document.getElementById('wc-grid')!;
-  const elDetail   = document.getElementById('wc-detail')!;
-  const elDetailDate = document.getElementById('wc-detail-date')!;
-  const elDetailText = document.getElementById('wc-detail-text')!;
+  const elLabel = document.getElementById('wc-month-label')!;
+  const elGrid = document.getElementById('wc-grid')!;
+  const elCalendarView = document.getElementById('wc-calendar-view')!;
+  const elListView = document.getElementById('wc-list-view')!;
+  const elList = document.getElementById('wc-list')!;
+  const elListEmpty = document.getElementById('wc-list-empty')!;
+  const elModal = document.getElementById('wc-modal')!;
+  const elModalDate = document.getElementById('wc-modal-date')!;
+  const elModalText = document.getElementById('wc-modal-text')!;
+  const elViewCalendar = document.getElementById('wc-view-calendar')!;
+  const elViewList = document.getElementById('wc-view-list')!;
 
-  /* ── Render the calendar grid for viewYear/viewMonth ── */
-  function render() {
+  /* ── Get workout keys for current month ── */
+  function getMonthKeys(): string[] {
+    const prefix = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}`;
+    return sortedKeys.filter(k => k.startsWith(prefix));
+  }
+
+  /* ── Render calendar grid ── */
+  function renderCalendar() {
     elLabel.textContent = `${MONTHS[viewMonth]} ${viewYear}`;
     elGrid.innerHTML = '';
-    elDetail.style.display = 'none';
 
     const first = new Date(viewYear, viewMonth, 1);
-    const startDow = first.getDay(); // 0=Sun
+    const startDow = first.getDay();
     const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
     const todayKey = toKey(new Date());
 
-    // leading empties
+    // Leading empty cells
     for (let i = 0; i < startDow; i++) {
       const cell = document.createElement('div');
       cell.className = 'wc-cell wc-empty';
@@ -124,7 +189,7 @@
 
     for (let d = 1; d <= daysInMonth; d++) {
       const key = toKey(new Date(viewYear, viewMonth, d));
-      const workout = workouts.get(key);
+      const hasWorkout = workouts.has(key);
       const cell = document.createElement('div');
       cell.className = 'wc-cell';
 
@@ -135,44 +200,152 @@
       num.textContent = String(d);
       cell.appendChild(num);
 
-      if (workout) {
+      if (hasWorkout) {
         cell.classList.add('wc-has-workout');
-        const preview = document.createElement('span');
-        preview.className = 'wc-preview';
-        preview.textContent = workout;
-        cell.appendChild(preview);
-        cell.addEventListener('click', () => showDetail(key, workout));
+        const dot = document.createElement('span');
+        dot.className = 'wc-dot';
+        cell.appendChild(dot);
+        cell.addEventListener('click', () => openModal(key));
       }
 
       elGrid.appendChild(cell);
     }
   }
 
-  function showDetail(key: string, text: string) {
-    const d = new Date(key + 'T00:00:00');
-    elDetailDate.textContent = d.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-    elDetailText.textContent = text;
-    elDetail.style.display = 'block';
+  /* ── Render list view ── */
+  function renderList() {
+    elLabel.textContent = `${MONTHS[viewMonth]} ${viewYear}`;
+    elList.innerHTML = '';
+
+    const monthKeys = getMonthKeys();
+
+    if (monthKeys.length === 0) {
+      elListEmpty.style.display = 'block';
+      return;
+    }
+
+    elListEmpty.style.display = 'none';
+
+    for (const key of monthKeys) {
+      const workout = workouts.get(key)!;
+      const item = document.createElement('article');
+      item.className = 'wc-list-item';
+
+      const header = document.createElement('div');
+      header.className = 'wc-list-header';
+
+      const date = document.createElement('time');
+      date.className = 'wc-list-date';
+      date.textContent = formatDate(key);
+      header.appendChild(date);
+
+      const expand = document.createElement('button');
+      expand.className = 'wc-list-expand';
+      expand.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
+      expand.setAttribute('aria-label', 'View in modal');
+      expand.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openModal(key);
+      });
+      header.appendChild(expand);
+
+      item.appendChild(header);
+
+      const content = document.createElement('pre');
+      content.className = 'wc-list-content';
+      content.textContent = workout;
+      item.appendChild(content);
+
+      elList.appendChild(item);
+    }
   }
 
-  /* ── Navigation ── */
+  /* ── Render based on current view ── */
+  function render() {
+    if (currentView === 'calendar') {
+      renderCalendar();
+    } else {
+      renderList();
+    }
+  }
+
+  /* ── Modal ── */
+  function openModal(key: string) {
+    currentModalKey = key;
+    const workout = workouts.get(key);
+    if (!workout) return;
+
+    elModalDate.textContent = formatDate(key);
+    elModalText.textContent = workout;
+    elModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    updateModalNav();
+  }
+
+  function closeModal() {
+    elModal.style.display = 'none';
+    document.body.style.overflow = '';
+    currentModalKey = null;
+  }
+
+  function updateModalNav() {
+    const prevBtn = document.getElementById('wc-modal-prev') as HTMLButtonElement;
+    const nextBtn = document.getElementById('wc-modal-next') as HTMLButtonElement;
+
+    if (!currentModalKey) return;
+
+    const idx = sortedKeys.indexOf(currentModalKey);
+    prevBtn.disabled = idx <= 0;
+    nextBtn.disabled = idx >= sortedKeys.length - 1;
+  }
+
+  function navigateModal(dir: -1 | 1) {
+    if (!currentModalKey) return;
+    const idx = sortedKeys.indexOf(currentModalKey);
+    const newIdx = idx + dir;
+    if (newIdx >= 0 && newIdx < sortedKeys.length) {
+      openModal(sortedKeys[newIdx]);
+    }
+  }
+
+  /* ── View toggle ── */
+  function setView(view: 'calendar' | 'list') {
+    currentView = view;
+    elViewCalendar.classList.toggle('active', view === 'calendar');
+    elViewList.classList.toggle('active', view === 'list');
+    elCalendarView.style.display = view === 'calendar' ? 'block' : 'none';
+    elListView.style.display = view === 'list' ? 'block' : 'none';
+    render();
+  }
+
+  /* ── Event listeners ── */
   document.getElementById('wc-prev')!.addEventListener('click', () => {
     viewMonth--;
     if (viewMonth < 0) { viewMonth = 11; viewYear--; }
     render();
   });
+
   document.getElementById('wc-next')!.addEventListener('click', () => {
     viewMonth++;
     if (viewMonth > 11) { viewMonth = 0; viewYear++; }
     render();
   });
-  document.getElementById('wc-detail-close')!.addEventListener('click', () => {
-    elDetail.style.display = 'none';
+
+  elViewCalendar.addEventListener('click', () => setView('calendar'));
+  elViewList.addEventListener('click', () => setView('list'));
+
+  document.getElementById('wc-modal-close')!.addEventListener('click', closeModal);
+  document.querySelector('.wc-modal-backdrop')!.addEventListener('click', closeModal);
+  document.getElementById('wc-modal-prev')!.addEventListener('click', () => navigateModal(-1));
+  document.getElementById('wc-modal-next')!.addEventListener('click', () => navigateModal(1));
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (elModal.style.display === 'flex') {
+      if (e.key === 'Escape') closeModal();
+      if (e.key === 'ArrowLeft') navigateModal(-1);
+      if (e.key === 'ArrowRight') navigateModal(1);
+    }
   });
 
   /* ── Fetch & init ── */
@@ -185,8 +358,7 @@
 
       const currentYear = new Date().getFullYear();
 
-      // Skip header row (index 0)
-      for (let r = 1; r < rows.length; r++) {
+      for (let r = 0; r < rows.length; r++) {
         const dateStr = (rows[r][0] || '').trim();
         const workout = (rows[r][1] || '').trim();
         if (!dateStr || !workout) continue;
@@ -194,6 +366,9 @@
         if (isNaN(parsed.getTime())) continue;
         workouts.set(toKey(parsed), workout);
       }
+
+      // Sort keys chronologically
+      sortedKeys = Array.from(workouts.keys()).sort();
 
       const now = new Date();
       viewYear = now.getFullYear();
@@ -212,7 +387,7 @@
   init();
 </script>
 
-<style>
+<style is:global>
   #workout-calendar {
     margin: 2rem 0;
   }
@@ -230,12 +405,54 @@
     background: #fef2f2;
   }
 
-  /* ── Navigation ── */
+  /* ── Header ── */
+  .wc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .wc-view-toggle {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .wc-view-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    background: none;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: var(--color-muted);
+    transition: all 0.2s;
+  }
+
+  .wc-view-btn:hover {
+    background: #f3f4f6;
+    color: var(--color-text);
+  }
+
+  .wc-view-btn.active {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: white;
+  }
+
+  .wc-view-btn svg {
+    flex-shrink: 0;
+  }
+
   .wc-nav {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1rem;
+    gap: 1rem;
   }
 
   .wc-nav button {
@@ -256,6 +473,8 @@
   .wc-nav span {
     font-weight: 600;
     font-size: 1.125rem;
+    min-width: 140px;
+    text-align: center;
   }
 
   /* ── Day-of-week headers ── */
@@ -266,10 +485,10 @@
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--color-muted);
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
   }
 
-  /* ── Grid ── */
+  /* ── Calendar Grid ── */
   .wc-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -277,13 +496,16 @@
   }
 
   .wc-cell {
-    min-height: 5rem;
+    aspect-ratio: 1;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
-    padding: 0.35rem 0.5rem;
-    font-size: 0.8rem;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
     position: relative;
-    overflow: hidden;
   }
 
   .wc-empty {
@@ -293,93 +515,262 @@
 
   .wc-day-num {
     font-weight: 600;
-    font-size: 0.75rem;
-    display: block;
-    margin-bottom: 0.15rem;
+    font-size: 0.875rem;
+    color: var(--color-text);
   }
 
   .wc-has-workout {
-    background: #f5f3ff;
-    border-left: 3px solid var(--color-accent);
+    background: #fff7ed;
+    border-color: #fed7aa;
     cursor: pointer;
-    transition: box-shadow 0.2s;
+    transition: all 0.2s;
   }
 
   .wc-has-workout:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: #ffedd5;
+    border-color: #fdba74;
+    box-shadow: 0 2px 8px rgba(251, 146, 60, 0.2);
   }
 
-  .wc-today {
-    box-shadow: inset 0 0 0 2px var(--color-accent);
+  .wc-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #f97316;
   }
 
-  .wc-preview {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    font-size: 0.7rem;
-    line-height: 1.35;
+  .wc-today .wc-day-num {
+    background: var(--color-accent);
+    color: white;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── List View ── */
+  .wc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .wc-list-empty {
     color: var(--color-muted);
+    padding: 2rem;
+    text-align: center;
+    background: #f9fafb;
+    border-radius: 8px;
   }
 
-  /* ── Detail panel ── */
-  .wc-detail {
-    margin-top: 1rem;
+  .wc-list-item {
     border: 1px solid #e5e7eb;
     border-radius: 8px;
-    padding: 1.5rem;
+    overflow: hidden;
   }
 
-  .wc-detail-header {
+  .wc-list-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    padding: 1rem 1.25rem;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
   }
 
-  .wc-detail-header strong {
-    font-size: 1rem;
+  .wc-list-date {
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--color-text);
   }
 
-  .wc-detail-header button {
+  .wc-list-expand {
     background: none;
     border: none;
-    font-size: 1.25rem;
     cursor: pointer;
     color: var(--color-muted);
-    padding: 0.25rem 0.5rem;
+    padding: 0.25rem;
     border-radius: 4px;
-    transition: background 0.2s;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .wc-detail-header button:hover {
-    background: #f3f4f6;
+  .wc-list-expand:hover {
+    background: #e5e7eb;
+    color: var(--color-accent);
   }
 
-  #wc-detail-text {
+  .wc-list-content {
+    padding: 1.25rem;
+    margin: 0;
     white-space: pre-wrap;
     font-family: var(--font-sans);
     font-size: 0.875rem;
-    line-height: 1.6;
+    line-height: 1.7;
+    color: var(--color-text);
+  }
+
+  /* ── Modal ── */
+  .wc-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .wc-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+  }
+
+  .wc-modal-content {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    animation: modalIn 0.2s ease-out;
+  }
+
+  @keyframes modalIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .wc-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .wc-modal-header strong {
+    flex: 1;
+    font-size: 1.0625rem;
+    text-align: center;
+  }
+
+  .wc-modal-nav {
+    background: none;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: var(--color-text);
+    transition: all 0.2s;
+  }
+
+  .wc-modal-nav:hover:not(:disabled) {
+    background: #f3f4f6;
+  }
+
+  .wc-modal-nav:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .wc-modal-close {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--color-muted);
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    line-height: 1;
+    transition: all 0.2s;
+  }
+
+  .wc-modal-close:hover {
+    background: #f3f4f6;
+    color: var(--color-text);
+  }
+
+  .wc-modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+  }
+
+  #wc-modal-text {
+    white-space: pre-wrap;
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    line-height: 1.75;
     color: var(--color-text);
     margin: 0;
   }
 
   /* ── Responsive ── */
   @media (max-width: 640px) {
+    .wc-header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .wc-view-toggle {
+      justify-content: center;
+    }
+
+    .wc-nav {
+      justify-content: space-between;
+    }
+
     .wc-cell {
-      min-height: 3.5rem;
       padding: 0.25rem;
     }
 
-    .wc-preview {
-      -webkit-line-clamp: 2;
-      font-size: 0.6rem;
+    .wc-day-num {
+      font-size: 0.75rem;
+    }
+
+    .wc-today .wc-day-num {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    .wc-dot {
+      width: 6px;
+      height: 6px;
     }
 
     .wc-day-headers span {
-      font-size: 0.65rem;
+      font-size: 0.625rem;
+    }
+
+    .wc-modal-content {
+      max-height: 90vh;
+    }
+
+    .wc-view-btn span {
+      display: none;
+    }
+
+    .wc-view-btn {
+      padding: 0.5rem;
     }
   }
 </style>
