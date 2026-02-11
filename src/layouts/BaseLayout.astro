@@ -44,8 +44,87 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
           <li><a href="/music">Music</a></li>
           <li><a href="/about">About</a></li>
         </ul>
+        <button id="search-btn" class="search-btn" aria-label="Search">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+        </button>
       </nav>
     </header>
+
+    <!-- Search Modal -->
+    <div id="search-modal" class="search-modal">
+      <div class="search-modal-backdrop"></div>
+      <div class="search-modal-content">
+        <div class="search-modal-header">
+          <span>Search</span>
+          <button id="search-close" class="search-close" aria-label="Close">&times;</button>
+        </div>
+        <div id="search-container"></div>
+      </div>
+    </div>
+
+    <script is:inline>
+      document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('search-modal');
+        const searchBtn = document.getElementById('search-btn');
+        const closeBtn = document.getElementById('search-close');
+        const backdrop = document.querySelector('.search-modal-backdrop');
+        let searchInitialized = false;
+
+        function openSearch() {
+          modal.classList.add('open');
+          document.body.style.overflow = 'hidden';
+
+          // Initialize Pagefind on first open
+          if (!searchInitialized && typeof PagefindUI !== 'undefined') {
+            new PagefindUI({
+              element: '#search-container',
+              showSubResults: true,
+              showImages: false,
+              excerptLength: 15,
+              translations: {
+                placeholder: 'Search posts and tags...',
+              },
+            });
+            searchInitialized = true;
+          }
+
+          // Focus the search input
+          setTimeout(() => {
+            const input = document.querySelector('#search-container input');
+            if (input) input.focus();
+          }, 100);
+        }
+
+        function closeSearch() {
+          modal.classList.remove('open');
+          document.body.style.overflow = '';
+        }
+
+        searchBtn.addEventListener('click', openSearch);
+        closeBtn.addEventListener('click', closeSearch);
+        backdrop.addEventListener('click', closeSearch);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+          // Cmd/Ctrl + K to open search
+          if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            e.preventDefault();
+            if (modal.classList.contains('open')) {
+              closeSearch();
+            } else {
+              openSearch();
+            }
+          }
+          // Escape to close
+          if (e.key === 'Escape' && modal.classList.contains('open')) {
+            closeSearch();
+          }
+        });
+      });
+    </script>
 
     <main>
       <slot />
@@ -141,9 +220,143 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         height: auto;
       }
 
+      /* Search Button */
+      .search-btn {
+        background: none;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.5rem;
+        cursor: pointer;
+        color: var(--color-muted);
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .search-btn:hover {
+        background: #f3f4f6;
+        color: var(--color-text);
+        border-color: var(--color-accent);
+      }
+
+      /* Search Modal */
+      .search-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: none;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 10vh 1rem 1rem;
+      }
+
+      .search-modal.open {
+        display: flex;
+      }
+
+      .search-modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+      }
+
+      .search-modal-content {
+        position: relative;
+        background: white;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 600px;
+        max-height: 70vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+        animation: searchModalIn 0.2s ease-out;
+        overflow: hidden;
+      }
+
+      @keyframes searchModalIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95) translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+
+      .search-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #e5e7eb;
+        font-weight: 600;
+      }
+
+      .search-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--color-muted);
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        line-height: 1;
+        transition: all 0.2s;
+      }
+
+      .search-close:hover {
+        background: #f3f4f6;
+        color: var(--color-text);
+      }
+
+      #search-container {
+        padding: 1rem;
+        overflow-y: auto;
+      }
+
       /* Pagefind overrides */
       .pagefind-ui__form {
-        margin-bottom: 2rem;
+        margin-bottom: 0;
+      }
+
+      .pagefind-ui__search-input {
+        border-radius: 8px !important;
+        font-size: 1rem !important;
+      }
+
+      .pagefind-ui__results-area {
+        margin-top: 1rem;
+      }
+
+      /* Responsive nav */
+      @media (max-width: 768px) {
+        nav ul {
+          gap: 1rem;
+          font-size: 0.875rem;
+        }
+      }
+
+      @media (max-width: 560px) {
+        nav {
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+
+        nav ul {
+          order: 3;
+          width: 100%;
+          justify-content: center;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+        }
+
+        .search-btn {
+          order: 2;
+        }
       }
     </style>
   </body>
