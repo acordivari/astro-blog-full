@@ -13,6 +13,7 @@ const reviews = defineCollection({
     imageAlt: z.string().optional(),
     rating: z.number().min(1).max(5).optional(),
     brand: z.string().optional(),
+    fabric: z.string().optional(),
     draft: z.boolean().default(false),
   }),
 });
