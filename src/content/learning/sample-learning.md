@@ -1,9 +1,15 @@
 ---
-title: "Learning: Placeholder Post"
-description: "A placeholder post for the Learning section."
+title: "Entry One: Why am I building a blog in 2026?"
+description: "Sharing myself with the world, v6"
 publishDate: 2026-01-22
 tags: ["skills", "education"]
 draft: false
 ---
 
-This is a placeholder post. Replace with your actual learning content.
+I've created a few different variations of a personal blog before, many different flavors. Myspace, Tumblr, then Github pages, then Hugo.js, and some back and forth with Wordpress over the years. I have newfound  motivation to update [my Hugo.js site]((https://thisisandrew.me/#)) as 1) it is nicely designed to serve as a portfolio site of sorts, 2) its always humbling to re-read my tone of voice from an age where my prefrontal cortex was still developing, and 3) it appears that I hardcoded a former partner's name into the source code. Guess that means you can stay tuned for a future post on dusting off this [repo](https://github.com/andrewdc92/personal-site-v3) . 
+
+My earlier forays into blogging served more elementary purposes- the fufillment of seeing thoughtfulness rendering in the browser. My canvas of sorts. Coloring inside the lines was never my strong suit. I was reflecting recently that amidst the enshittification of social media, there's been some hesitancy and incongruence when it comes to answering the question of 'what do I want to share with the world via the internet?' This is a committment learn/fail/grow in some public fashion. And for what it's worth, there's not much skin in the game when I'm currently writing drafts with no traffic.  The exponential growth of AI infrastructure and tooling has created a clamor for perceived originality, and I've observed discourse around the 'eat or be eaten' perspectives around jobs and our humanity in general. Publishing learnings on the web is far from new, I cringe seeing takes that compare public learning attempts to some ascendent signal. I was fortunate to work directly with entpreneurs for the earlier parts of my professional career and [Ryan](https://www.ryanckulp.com/) was particularly dedicated example of someone who documented his learnings and endeavors in real time. Skin in the game is probably still one of his favorite expressions. 
+
+
+I now work in a fairly regulated sector, a company-managed labtop with layers of firewalls and monitoring software installed. 
+Most salaried jobs provide an axis of learning new skills and executing existing ones. The best employers are keenly aware of this and hone in on creating the infrastructure that allows one to oscillate with some degree of agency between learning and doing. There is of course the middle path of doing- the intersection where new knowledge must be implemented in some earnest fashion before we can get to the part where we're executing said knowledge in a state flow. There will be a lot of guitar and music-related content here, but I'll paraphrase one of my favorite axioms: -> *you gotta know the scales to play jazz.* A musical way of saying 'you need to learn the rules before you break them'. 
