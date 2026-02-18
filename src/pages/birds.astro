@@ -1,0 +1,110 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import BirdsOfPreyMap from '../components/BirdsOfPreyMap.astro';
+---
+
+<BaseLayout title="Birds of Prey - Andrew Cordivari" description="Birds of prey sightings near Boulder, Colorado from GBIF">
+  <h1>Birds of Prey</h1>
+  <p class="intro">Exploring raptor sightings in the Boulder, Colorado area using data from the Global Biodiversity Information Facility.</p>
+
+  <BirdsOfPreyMap />
+
+  <section class="about-data">
+    <h2>About This Data</h2>
+    <p>
+      This map displays recent bird of prey observations within 100 miles of Boulder, Colorado.
+      The data comes from <a href="https://www.gbif.org" target="_blank" rel="noopener">GBIF</a>,
+      an international network that aggregates biodiversity data from sources worldwide including
+      eBird, iNaturalist, and museum collections.
+    </p>
+    <h3>Species Groups</h3>
+    <ul class="species-list">
+      <li><span class="dot red"></span> <strong>Accipitriformes</strong> — Hawks, eagles, kites, harriers, and Old World vultures</li>
+      <li><span class="dot orange"></span> <strong>Falconiformes</strong> — Falcons and caracaras</li>
+      <li><span class="dot blue"></span> <strong>Strigiformes</strong> — Owls</li>
+    </ul>
+  </section>
+</BaseLayout>
+
+<style>
+  h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .intro {
+    color: var(--color-muted);
+    margin-bottom: 2rem;
+    max-width: 600px;
+  }
+
+  .about-data {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .about-data h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .about-data h3 {
+    font-size: 1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .about-data p {
+    color: var(--color-muted);
+    line-height: 1.7;
+    max-width: 700px;
+  }
+
+  .about-data a {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .about-data a:hover {
+    text-decoration: underline;
+  }
+
+  .species-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .species-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--color-muted);
+  }
+
+  .species-list strong {
+    color: var(--color-text);
+  }
+
+  .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot.red {
+    background: #ef4444;
+  }
+
+  .dot.orange {
+    background: #f97316;
+  }
+
+  .dot.blue {
+    background: #3b82f6;
+  }
+</style>
