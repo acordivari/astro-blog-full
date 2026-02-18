@@ -22,14 +22,12 @@
   <div id="birds-loading" class="birds-message">Loading bird sightings...</div>
   <div id="birds-error" class="birds-message birds-error" style="display:none"></div>
 
-  <div class="birds-layout">
-    <div id="birds-map"></div>
+  <div id="birds-map"></div>
 
-    <div id="birds-species-panel" class="birds-species-panel">
-      <h3>Species Found</h3>
-      <p class="birds-panel-subtitle">Click a species for details</p>
-      <div id="birds-species-list" class="birds-species-list"></div>
-    </div>
+  <div id="birds-species-section" class="birds-species-section">
+    <h3>Species Found <span id="birds-species-count-label"></span></h3>
+    <p class="birds-section-subtitle">Click a species for photos and details</p>
+    <div id="birds-species-grid" class="birds-species-grid"></div>
   </div>
 
   <div class="birds-stats">
@@ -105,6 +103,9 @@
     7191: [7191], // Falcons
     1458: [1458], // Owls
   };
+
+  // Valid raptor orders - strict filter to exclude any non-raptor species
+  const VALID_RAPTOR_ORDERS = ['Accipitriformes', 'Falconiformes', 'Strigiformes'];
 
   let map: any;
   let markers: any[] = [];
@@ -236,20 +237,31 @@
       // Track unique species with metadata
       speciesData.clear();
 
-      // Create markers and build species data
-      for (const occ of allOccurrences) {
-        if (!occ.decimalLatitude || !occ.decimalLongitude) continue;
+      // Filter to only valid raptor orders and create markers
+      const validOccurrences = allOccurrences.filter(occ => {
+        // Must have coordinates
+        if (!occ.decimalLatitude || !occ.decimalLongitude) return false;
+        // Must have a valid raptor order - strict validation
+        if (!occ.order || !VALID_RAPTOR_ORDERS.includes(occ.order)) return false;
+        // Must have a species name
+        if (!occ.species && !occ.genericName) return false;
+        return true;
+      });
 
-        const speciesName = occ.species || occ.genericName || 'Unknown';
+      // Create markers and build species data
+      for (const occ of validOccurrences) {
+        const speciesName = occ.species || occ.genericName;
 
         // Update species data
+        // Note: We don't use occ.vernacularName as it may be non-English
+        // Common names are fetched separately from GBIF/iNaturalist APIs
         if (speciesData.has(speciesName)) {
           speciesData.get(speciesName)!.count++;
         } else {
           speciesData.set(speciesName, {
             scientificName: speciesName,
-            vernacularName: occ.vernacularName || '',
-            order: occ.order || 'Unknown',
+            vernacularName: '',
+            order: occ.order,
             family: occ.family || 'Unknown',
             count: 1,
             gbifKey: occ.speciesKey || occ.taxonKey || 0,
@@ -271,8 +283,7 @@
 
         marker.bindPopup(`
           <strong>${speciesName}</strong><br>
-          ${occ.vernacularName ? `<em>${occ.vernacularName}</em><br>` : ''}
-          Order: ${occ.order || 'Unknown'}<br>
+          Order: ${occ.order}<br>
           Date: ${date}<br>
           ${occ.stateProvince ? `Location: ${occ.stateProvince}<br>` : ''}
           <button class="popup-species-btn" onclick="window.openSpeciesModal('${speciesName.replace(/'/g, "\\'")}')">View Species Details</button>
@@ -282,10 +293,13 @@
         markers.push(marker);
       }
 
+      // Fetch common names for species missing vernacularName
+      await fetchMissingCommonNames();
+
       // Build species list panel
       renderSpeciesList();
 
-      elCount.textContent = `${allOccurrences.length} sightings`;
+      elCount.textContent = `${validOccurrences.length} sightings`;
       elSpecies.textContent = `${speciesData.size} species`;
     } catch (err) {
       elLoading.style.display = 'none';
@@ -308,27 +322,98 @@
     }
   }
 
-  /* ── Species List Panel ── */
+  // Fetch common names for species missing vernacularName
+  // Uses multiple sources: Wikipedia (best for English), iNaturalist, then GBIF
+  async function fetchMissingCommonNames() {
+    const speciesNeedingNames = Array.from(speciesData.entries())
+      .filter(([_, info]) => !info.vernacularName)
+      .slice(0, 50);
+
+    const fetchPromises = speciesNeedingNames.map(async ([name, info]) => {
+      try {
+        // 1. Try Wikipedia first - article titles are often common English names
+        const wikiTitle = name.replace(/ /g, '_');
+        const wikiResponse = await fetch(
+          `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTitle)}`
+        );
+        if (wikiResponse.ok) {
+          const wikiData = await wikiResponse.json();
+          // Wikipedia often redirects scientific names to common name articles
+          // Check if title differs from scientific name and looks like English
+          const pageTitle = wikiData.title;
+          if (pageTitle &&
+              pageTitle.toLowerCase() !== name.toLowerCase() &&
+              /^[A-Za-z\s\-']+$/.test(pageTitle)) {
+            info.vernacularName = pageTitle;
+            return;
+          }
+        }
+
+        // 2. Try iNaturalist - use both english_common_name and preferred_common_name
+        const inatResponse = await fetch(
+          `https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(name)}&rank=species&per_page=1&locale=en`
+        );
+        if (inatResponse.ok) {
+          const inatData = await inatResponse.json();
+          const taxon = inatData.results?.[0];
+          const commonName = taxon?.english_common_name || taxon?.preferred_common_name;
+          if (commonName && /^[A-Za-z\s\-']+$/.test(commonName)) {
+            info.vernacularName = commonName;
+            return;
+          }
+        }
+
+        // 3. Last resort: GBIF with strict ASCII check
+        if (info.gbifKey) {
+          const response = await fetch(
+            `https://api.gbif.org/v1/species/${info.gbifKey}/vernacularNames?limit=20`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            const englishName = data.results?.find(
+              (n: any) => (n.language === 'eng' || n.language === 'en') &&
+                          /^[A-Za-z\s\-']+$/.test(n.vernacularName)
+            );
+            if (englishName?.vernacularName) {
+              info.vernacularName = englishName.vernacularName;
+            }
+          }
+        }
+      } catch {
+        // Ignore errors for individual species lookups
+      }
+    });
+
+    await Promise.all(fetchPromises);
+  }
+
+  /* ── Species Grid ── */
   function renderSpeciesList() {
-    const listEl = document.getElementById('birds-species-list')!;
-    listEl.innerHTML = '';
+    const gridEl = document.getElementById('birds-species-grid')!;
+    const countLabel = document.getElementById('birds-species-count-label')!;
+    gridEl.innerHTML = '';
 
-    // Sort by count descending
-    const sorted = Array.from(speciesData.entries()).sort((a, b) => b[1].count - a[1].count);
+    // Filter out unknown and sort by count descending
+    const filtered = Array.from(speciesData.entries())
+      .filter(([name, info]) => name !== 'Unknown' && info.order !== 'Unknown')
+      .sort((a, b) => b[1].count - a[1].count);
 
-    for (const [name, info] of sorted) {
-      const item = document.createElement('div');
-      item.className = 'species-list-item';
-      item.innerHTML = `
-        <div class="species-list-color" style="background: ${getColorForOrder(info.order)}"></div>
-        <div class="species-list-info">
-          <span class="species-list-name">${info.vernacularName || name}</span>
-          <span class="species-list-scientific">${name}</span>
+    countLabel.textContent = `(${filtered.length})`;
+
+    for (const [name, info] of filtered) {
+      const displayName = info.vernacularName || name;
+      const card = document.createElement('div');
+      card.className = 'species-card';
+      card.innerHTML = `
+        <div class="species-card-color" style="background: ${getColorForOrder(info.order)}"></div>
+        <div class="species-card-content">
+          <span class="species-card-common">${displayName}</span>
+          <span class="species-card-scientific">${name}</span>
         </div>
-        <span class="species-list-count">${info.count}</span>
+        <span class="species-card-count">${info.count}</span>
       `;
-      item.addEventListener('click', () => openSpeciesModal(name));
-      listEl.appendChild(item);
+      card.addEventListener('click', () => openSpeciesModal(name));
+      gridEl.appendChild(card);
     }
   }
 
@@ -358,7 +443,7 @@
 
       // Populate modal
       document.getElementById('species-modal-name')!.textContent = speciesName;
-      document.getElementById('species-modal-common')!.textContent = info.vernacularName || inatData.commonName || '';
+      document.getElementById('species-modal-common')!.textContent = info.vernacularName || wikiData.commonName || inatData.commonName || '';
       document.getElementById('species-modal-order')!.textContent = info.order;
       document.getElementById('species-modal-family')!.textContent = info.family;
       document.getElementById('species-modal-sightings')!.textContent = `${info.count} sightings`;
@@ -418,7 +503,7 @@
     }
   }
 
-  async function fetchWikipediaData(speciesName: string): Promise<{ extract: string; image: string }> {
+  async function fetchWikipediaData(speciesName: string): Promise<{ extract: string; image: string; commonName: string }> {
     try {
       const title = speciesName.replace(/ /g, '_');
       const response = await fetch(
@@ -426,23 +511,30 @@
       );
 
       if (!response.ok) {
-        return { extract: '', image: '' };
+        return { extract: '', image: '', commonName: '' };
       }
 
       const data = await response.json();
+      // Check if page title differs from scientific name and looks English
+      const pageTitle = data.title || '';
+      const isCommonName = pageTitle &&
+        pageTitle.toLowerCase() !== speciesName.toLowerCase() &&
+        /^[A-Za-z\s\-']+$/.test(pageTitle);
+
       return {
         extract: data.extract || '',
         image: data.thumbnail?.source || data.originalimage?.source || '',
+        commonName: isCommonName ? pageTitle : '',
       };
     } catch {
-      return { extract: '', image: '' };
+      return { extract: '', image: '', commonName: '' };
     }
   }
 
   async function fetchINaturalistData(speciesName: string): Promise<{ photos: string[]; commonName: string }> {
     try {
       const response = await fetch(
-        `https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(speciesName)}&rank=species&per_page=1`
+        `https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(speciesName)}&rank=species&per_page=1&locale=en`
       );
 
       if (!response.ok) {
@@ -453,9 +545,12 @@
       if (data.results && data.results.length > 0) {
         const taxon = data.results[0];
         const photos = taxon.taxon_photos?.map((p: any) => p.photo.medium_url) || [];
+        // Use english_common_name or preferred_common_name if it looks English
+        const commonName = taxon.english_common_name || taxon.preferred_common_name || '';
+        const isEnglish = /^[A-Za-z\s\-']+$/.test(commonName);
         return {
           photos: photos.slice(0, 6),
-          commonName: taxon.preferred_common_name || '',
+          commonName: isEnglish ? commonName : '',
         };
       }
 
@@ -552,13 +647,6 @@
     color: #b91c1c;
   }
 
-  /* Layout: Map + Species Panel */
-  .birds-layout {
-    display: grid;
-    grid-template-columns: 1fr 320px;
-    gap: 1rem;
-  }
-
   #birds-map {
     height: 500px;
     border-radius: 12px;
@@ -566,91 +654,90 @@
     overflow: hidden;
   }
 
-  /* Species Panel */
-  .birds-species-panel {
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 1rem;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+  /* Species Section (below map) */
+  .birds-species-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
   }
 
-  .birds-species-panel h3 {
-    font-size: 1rem;
+  .birds-species-section h3 {
+    font-size: 1.25rem;
     margin-bottom: 0.25rem;
   }
 
-  .birds-panel-subtitle {
-    font-size: 0.8125rem;
+  .birds-species-section h3 span {
+    font-weight: 400;
     color: var(--color-muted);
-    margin-bottom: 0.75rem;
+    font-size: 1rem;
   }
 
-  .birds-species-list {
-    flex: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+  .birds-section-subtitle {
+    font-size: 0.875rem;
+    color: var(--color-muted);
+    margin-bottom: 1rem;
   }
 
-  .species-list-item {
+  .birds-species-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .species-card {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.625rem 0.75rem;
-    background: white;
+    padding: 0.875rem 1rem;
+    background: #f9fafb;
     border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s;
   }
 
-  .species-list-item:hover {
+  .species-card:hover {
+    background: white;
     border-color: var(--color-accent);
-    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.12);
+    transform: translateY(-1px);
   }
 
-  .species-list-color {
-    width: 10px;
-    height: 10px;
+  .species-card-color {
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     flex-shrink: 0;
   }
 
-  .species-list-info {
+  .species-card-content {
     flex: 1;
     min-width: 0;
   }
 
-  .species-list-name {
+  .species-card-common {
     display: block;
-    font-weight: 500;
-    font-size: 0.875rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--color-text);
+    margin-bottom: 0.125rem;
   }
 
-  .species-list-scientific {
+  .species-card-scientific {
     display: block;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     color: var(--color-muted);
     font-style: italic;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
-  .species-list-count {
-    font-size: 0.75rem;
+  .species-card-count {
+    font-size: 0.8125rem;
     font-weight: 600;
-    color: var(--color-muted);
-    background: #e5e7eb;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
+    color: white;
+    background: var(--color-accent);
+    padding: 0.25rem 0.625rem;
+    border-radius: 12px;
+    flex-shrink: 0;
   }
 
   /* Popup button */
@@ -917,14 +1004,6 @@
 
   /* Responsive */
   @media (max-width: 900px) {
-    .birds-layout {
-      grid-template-columns: 1fr;
-    }
-
-    .birds-species-panel {
-      max-height: 250px;
-    }
-
     .species-modal-body {
       flex-direction: column;
     }
@@ -936,6 +1015,10 @@
 
     #species-modal-image {
       min-height: 200px;
+    }
+
+    .birds-species-grid {
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     }
   }
 
