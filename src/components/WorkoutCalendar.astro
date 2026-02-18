@@ -8,8 +8,27 @@
   <div id="wc-error" class="wc-message wc-error" style="display:none"></div>
 
   <div id="wc-calendar" style="display:none">
+    <!-- Search -->
+    <div class="wc-search">
+      <svg class="wc-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.35-4.35"></path>
+      </svg>
+      <input type="text" id="wc-search-input" placeholder="Search workouts (e.g., RDL, squat, bench)..." />
+      <button id="wc-search-clear" class="wc-search-clear" style="display:none" aria-label="Clear search">&times;</button>
+    </div>
+
+    <!-- Search Results -->
+    <div id="wc-search-results" class="wc-search-results" style="display:none">
+      <div class="wc-search-results-header">
+        <span id="wc-search-count"></span>
+        <button id="wc-search-back" class="wc-search-back">Back to calendar</button>
+      </div>
+      <div id="wc-search-list" class="wc-list"></div>
+    </div>
+
     <!-- Header: View Toggle + Month Nav -->
-    <div class="wc-header">
+    <div id="wc-header" class="wc-header">
       <div class="wc-view-toggle">
         <button id="wc-view-calendar" class="wc-view-btn active" aria-label="Calendar view">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -152,6 +171,7 @@
   const elLoading = document.getElementById('wc-loading')!;
   const elError = document.getElementById('wc-error')!;
   const elCalendar = document.getElementById('wc-calendar')!;
+  const elHeader = document.getElementById('wc-header')!;
   const elLabel = document.getElementById('wc-month-label')!;
   const elGrid = document.getElementById('wc-grid')!;
   const elCalendarView = document.getElementById('wc-calendar-view')!;
@@ -163,6 +183,11 @@
   const elModalText = document.getElementById('wc-modal-text')!;
   const elViewCalendar = document.getElementById('wc-view-calendar')!;
   const elViewList = document.getElementById('wc-view-list')!;
+  const elSearchInput = document.getElementById('wc-search-input') as HTMLInputElement;
+  const elSearchClear = document.getElementById('wc-search-clear')!;
+  const elSearchResults = document.getElementById('wc-search-results')!;
+  const elSearchList = document.getElementById('wc-search-list')!;
+  const elSearchCount = document.getElementById('wc-search-count')!;
 
   /* ── Get workout keys for current month ── */
   function getMonthKeys(): string[] {
@@ -348,6 +373,104 @@
     }
   });
 
+  /* ── Search ── */
+  function performSearch(query: string) {
+    const q = query.toLowerCase().trim();
+    if (!q) {
+      exitSearch();
+      return;
+    }
+
+    // Search all workouts
+    const results: Array<{ key: string; workout: string }> = [];
+    for (const [key, workout] of workouts) {
+      if (workout.toLowerCase().includes(q)) {
+        results.push({ key, workout });
+      }
+    }
+
+    // Sort by date (newest first)
+    results.sort((a, b) => b.key.localeCompare(a.key));
+
+    // Show results
+    elSearchResults.style.display = 'block';
+    elHeader.style.display = 'none';
+    elCalendarView.style.display = 'none';
+    elListView.style.display = 'none';
+    elSearchClear.style.display = 'block';
+
+    elSearchCount.textContent = `${results.length} result${results.length !== 1 ? 's' : ''} for "${query}"`;
+    elSearchList.innerHTML = '';
+
+    if (results.length === 0) {
+      elSearchList.innerHTML = '<p class="wc-list-empty">No workouts found matching your search.</p>';
+      return;
+    }
+
+    for (const { key, workout } of results) {
+      const item = document.createElement('article');
+      item.className = 'wc-list-item';
+
+      const header = document.createElement('div');
+      header.className = 'wc-list-header';
+
+      const date = document.createElement('time');
+      date.className = 'wc-list-date';
+      date.textContent = formatDate(key);
+      header.appendChild(date);
+
+      const expand = document.createElement('button');
+      expand.className = 'wc-list-expand';
+      expand.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
+      expand.setAttribute('aria-label', 'View in modal');
+      expand.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openModal(key);
+      });
+      header.appendChild(expand);
+
+      item.appendChild(header);
+
+      // Highlight matching text
+      const content = document.createElement('pre');
+      content.className = 'wc-list-content';
+      content.innerHTML = highlightMatches(workout, q);
+      item.appendChild(content);
+
+      elSearchList.appendChild(item);
+    }
+  }
+
+  function highlightMatches(text: string, query: string): string {
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escaped})`, 'gi');
+    return text.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(regex, '<mark>$1</mark>');
+  }
+
+  function exitSearch() {
+    elSearchInput.value = '';
+    elSearchClear.style.display = 'none';
+    elSearchResults.style.display = 'none';
+    elHeader.style.display = 'flex';
+    if (currentView === 'calendar') {
+      elCalendarView.style.display = 'block';
+    } else {
+      elListView.style.display = 'block';
+    }
+  }
+
+  // Search event listeners
+  let searchTimeout: number;
+  elSearchInput.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = window.setTimeout(() => {
+      performSearch(elSearchInput.value);
+    }, 200);
+  });
+
+  elSearchClear.addEventListener('click', exitSearch);
+  document.getElementById('wc-search-back')!.addEventListener('click', exitSearch);
+
   /* ── Fetch & init ── */
   async function init() {
     try {
@@ -390,6 +513,102 @@
 <style is:global>
   #workout-calendar {
     margin: 2rem 0;
+  }
+
+  /* ── Search ── */
+  .wc-search {
+    position: relative;
+    margin-bottom: 1rem;
+  }
+
+  .wc-search-icon {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-muted);
+    pointer-events: none;
+  }
+
+  #wc-search-input {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 2.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    font-family: var(--font-sans);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  #wc-search-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  }
+
+  #wc-search-input::placeholder {
+    color: var(--color-muted);
+  }
+
+  .wc-search-clear {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: var(--color-muted);
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+
+  .wc-search-clear:hover {
+    background: #f3f4f6;
+    color: var(--color-text);
+  }
+
+  .wc-search-results {
+    margin-bottom: 1rem;
+  }
+
+  .wc-search-results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  #wc-search-count {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .wc-search-back {
+    background: none;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    color: var(--color-muted);
+    transition: all 0.2s;
+  }
+
+  .wc-search-back:hover {
+    background: #f3f4f6;
+    color: var(--color-text);
+  }
+
+  .wc-list-content mark {
+    background: #fef08a;
+    color: inherit;
+    padding: 0.1rem 0.2rem;
+    border-radius: 2px;
   }
 
   .wc-message {
