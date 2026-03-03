@@ -33,6 +33,7 @@
   <div class="birds-stats">
     <span id="birds-count">0 sightings</span>
     <span id="birds-species">0 species</span>
+    <span id="birds-cache-status" class="cache-status"></span>
   </div>
 
   <p class="birds-attribution">
@@ -107,11 +108,24 @@
   // Valid raptor orders - strict filter to exclude any non-raptor species
   const VALID_RAPTOR_ORDERS = ['Accipitriformes', 'Falconiformes', 'Strigiformes'];
 
+  // Cache configuration - using IndexedDB for larger storage
+  const DB_NAME = 'birds-of-prey-db';
+  const DB_VERSION = 1;
+  const STORE_NAME = 'cache';
+
+  interface CachedData {
+    id: string;
+    timestamp: number;
+    occurrences: any[];
+    speciesNames: Record<string, string>;
+  }
+
   let map: any;
   let markers: any[] = [];
-  let markerCluster: any;
+  let cachedOccurrences: any[] = [];
+  let cachedSpeciesNames: Record<string, string> = {};
 
-  // Species data cache
+  // Species data for current view
   interface SpeciesInfo {
     scientificName: string;
     vernacularName: string;
@@ -121,6 +135,93 @@
     gbifKey: number;
   }
   let speciesData: Map<string, SpeciesInfo> = new Map();
+
+  // IndexedDB helper functions
+  function openDB(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+      request.onupgradeneeded = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        }
+      };
+    });
+  }
+
+  async function loadFromCache(): Promise<CachedData | null> {
+    try {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.get('birds-data');
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          const data = request.result as CachedData | undefined;
+          if (data) {
+            console.log('Loaded from IndexedDB:', data.occurrences.length, 'occurrences');
+          } else {
+            console.log('No cache in IndexedDB');
+          }
+          resolve(data || null);
+        };
+      });
+    } catch (e) {
+      console.error('Error loading cache:', e);
+      return null;
+    }
+  }
+
+  async function saveToCache(occurrences: any[], speciesNames: Record<string, string>) {
+    try {
+      const db = await openDB();
+      const timestamp = Date.now();
+      const data: CachedData = {
+        id: 'birds-data',
+        timestamp,
+        occurrences,
+        speciesNames,
+      };
+
+      return new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.put(data);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          console.log('Saved to IndexedDB:', occurrences.length, 'occurrences,', Object.keys(speciesNames).length, 'species names');
+          updateCacheStatus(timestamp, true);
+          resolve();
+        };
+      });
+    } catch (e) {
+      console.warn('Failed to save to cache:', e);
+    }
+  }
+
+  function updateCacheStatus(timestamp: number, justRefreshed = false) {
+    const el = document.getElementById('birds-cache-status');
+    if (!el) return;
+
+    const date = new Date(timestamp);
+    const timeStr = date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+
+    if (justRefreshed) {
+      el.textContent = `Updated just now`;
+      el.className = 'cache-status fresh';
+    } else {
+      el.textContent = `Cached: ${timeStr}`;
+      el.className = 'cache-status';
+    }
+  }
 
   async function initMap() {
     const L = (window as any).L;
@@ -156,27 +257,38 @@
       dashArray: '5, 5',
     }).addTo(map);
 
-    // Load initial data
-    await loadBirdData('all');
+    // Check for cached data first
+    const cached = await loadFromCache();
+
+    if (cached && cached.occurrences.length > 0) {
+      cachedOccurrences = cached.occurrences;
+      cachedSpeciesNames = cached.speciesNames;
+      console.log('Using cached data:', cached.occurrences.length, 'occurrences,', Object.keys(cachedSpeciesNames).length, 'species names');
+      displayBirdData('all');
+      updateCacheStatus(cached.timestamp);
+    } else {
+      console.log('Fetching fresh data from API...');
+      await fetchAndCacheBirdData('all');
+    }
 
     // Event listeners
     document.getElementById('birds-taxon')!.addEventListener('change', (e) => {
       const value = (e.target as HTMLSelectElement).value;
-      loadBirdData(value);
+      // Use cached data when filtering
+      displayBirdData(value);
     });
 
-    document.getElementById('birds-refresh')!.addEventListener('click', () => {
+    document.getElementById('birds-refresh')!.addEventListener('click', async () => {
       const value = (document.getElementById('birds-taxon') as HTMLSelectElement).value;
-      loadBirdData(value);
+      // Force refresh from API
+      await fetchAndCacheBirdData(value);
     });
   }
 
-  async function loadBirdData(taxonFilter: string) {
-    const L = (window as any).L;
+  // Fetch fresh data from API and cache it
+  async function fetchAndCacheBirdData(currentFilter: string) {
     const elLoading = document.getElementById('birds-loading')!;
     const elError = document.getElementById('birds-error')!;
-    const elCount = document.getElementById('birds-count')!;
-    const elSpecies = document.getElementById('birds-species')!;
 
     // Clear existing markers
     markers.forEach((m) => map.removeLayer(m));
@@ -186,14 +298,14 @@
     elError.style.display = 'none';
 
     try {
-      const taxonKeys = TAXON_KEYS[taxonFilter as keyof typeof TAXON_KEYS];
+      // Always fetch ALL taxa to build complete cache
+      const allTaxonKeys = TAXON_KEYS.all;
       const allOccurrences: any[] = [];
 
-      // Fetch data for each taxon key with pagination (GBIF caps at 300 per request)
       const GBIF_LIMIT = 300;
-      const MAX_PAGES = 4; // Up to 1200 results per taxon
+      const MAX_PAGES = 4;
 
-      for (const taxonKey of taxonKeys) {
+      for (const taxonKey of allTaxonKeys) {
         let offset = 0;
         let page = 0;
         let hasMore = true;
@@ -219,45 +331,39 @@
           const data = await response.json();
           allOccurrences.push(...data.results);
 
-          // Check if there are more results
           hasMore = data.endOfRecords === false && data.results.length === GBIF_LIMIT;
           offset += GBIF_LIMIT;
           page++;
         }
       }
 
-      elLoading.style.display = 'none';
-
-      if (allOccurrences.length === 0) {
-        elCount.textContent = '0 sightings';
-        elSpecies.textContent = '0 species';
-        return;
-      }
-
-      // Track unique species with metadata
-      speciesData.clear();
-
-      // Filter to only valid raptor orders and create markers
+      // Filter to valid raptors
       const validOccurrences = allOccurrences.filter(occ => {
-        // Must have coordinates
         if (!occ.decimalLatitude || !occ.decimalLongitude) return false;
-        // Must have a valid raptor order - strict validation
         if (!occ.order || !VALID_RAPTOR_ORDERS.includes(occ.order)) return false;
-        // Must have a species name
         if (!occ.species && !occ.genericName) return false;
         return true;
       });
 
-      // Create markers and build species data
+      // Store in memory cache - only keep fields we need to reduce size
+      cachedOccurrences = validOccurrences.map(occ => ({
+        decimalLatitude: occ.decimalLatitude,
+        decimalLongitude: occ.decimalLongitude,
+        species: occ.species,
+        genericName: occ.genericName,
+        order: occ.order,
+        family: occ.family,
+        eventDate: occ.eventDate,
+        stateProvince: occ.stateProvince,
+        speciesKey: occ.speciesKey,
+        taxonKey: occ.taxonKey,
+      }));
+
+      // Build species data and fetch common names
+      speciesData.clear();
       for (const occ of validOccurrences) {
         const speciesName = occ.species || occ.genericName;
-
-        // Update species data
-        // Note: We don't use occ.vernacularName as it may be non-English
-        // Common names are fetched separately from GBIF/iNaturalist APIs
-        if (speciesData.has(speciesName)) {
-          speciesData.get(speciesName)!.count++;
-        } else {
+        if (!speciesData.has(speciesName)) {
           speciesData.set(speciesName, {
             scientificName: speciesName,
             vernacularName: '',
@@ -266,47 +372,119 @@
             count: 1,
             gbifKey: occ.speciesKey || occ.taxonKey || 0,
           });
+        } else {
+          speciesData.get(speciesName)!.count++;
         }
-
-        const marker = L.circleMarker([occ.decimalLatitude, occ.decimalLongitude], {
-          radius: 6,
-          fillColor: getColorForOrder(occ.order),
-          color: '#fff',
-          weight: 1,
-          opacity: 1,
-          fillOpacity: 0.8,
-        });
-
-        const date = occ.eventDate
-          ? new Date(occ.eventDate).toLocaleDateString()
-          : 'Date unknown';
-
-        marker.bindPopup(`
-          <strong>${speciesName}</strong><br>
-          Order: ${occ.order}<br>
-          Date: ${date}<br>
-          ${occ.stateProvince ? `Location: ${occ.stateProvince}<br>` : ''}
-          <button class="popup-species-btn" onclick="window.openSpeciesModal('${speciesName.replace(/'/g, "\\'")}')">View Species Details</button>
-        `);
-
-        marker.addTo(map);
-        markers.push(marker);
       }
 
-      // Fetch common names for species missing vernacularName
+      // Fetch common names
       await fetchMissingCommonNames();
 
-      // Build species list panel
-      renderSpeciesList();
+      // Cache species names for future use
+      cachedSpeciesNames = {};
+      speciesData.forEach((info, name) => {
+        if (info.vernacularName) {
+          cachedSpeciesNames[name] = info.vernacularName;
+        }
+      });
 
-      elCount.textContent = `${validOccurrences.length} sightings`;
-      elSpecies.textContent = `${speciesData.size} species`;
+      // Save to IndexedDB
+      await saveToCache(cachedOccurrences, cachedSpeciesNames);
+
+      elLoading.style.display = 'none';
+
+      // Display with current filter
+      displayBirdData(currentFilter);
+
     } catch (err) {
       elLoading.style.display = 'none';
       elError.style.display = 'block';
       elError.textContent = 'Failed to load bird data. Please try again.';
       console.error(err);
     }
+  }
+
+  // Display data from cache, filtered by taxon
+  function displayBirdData(taxonFilter: string) {
+    const L = (window as any).L;
+    const elLoading = document.getElementById('birds-loading')!;
+    const elCount = document.getElementById('birds-count')!;
+    const elSpecies = document.getElementById('birds-species')!;
+
+    elLoading.style.display = 'none';
+
+    // Clear existing markers
+    markers.forEach((m) => map.removeLayer(m));
+    markers = [];
+
+    if (cachedOccurrences.length === 0) {
+      elCount.textContent = '0 sightings';
+      elSpecies.textContent = '0 species';
+      return;
+    }
+
+    // Filter by selected taxon
+    const taxonKeys = TAXON_KEYS[taxonFilter as keyof typeof TAXON_KEYS];
+    const orderMap: Record<number, string> = {
+      2877: 'Accipitriformes',
+      7191: 'Falconiformes',
+      1458: 'Strigiformes',
+    };
+    const allowedOrders = taxonKeys.map(k => orderMap[k]);
+
+    const filteredOccurrences = cachedOccurrences.filter(occ =>
+      allowedOrders.includes(occ.order)
+    );
+
+    // Rebuild species data for filtered view
+    speciesData.clear();
+    for (const occ of filteredOccurrences) {
+      const speciesName = occ.species || occ.genericName;
+
+      if (speciesData.has(speciesName)) {
+        speciesData.get(speciesName)!.count++;
+      } else {
+        speciesData.set(speciesName, {
+          scientificName: speciesName,
+          vernacularName: cachedSpeciesNames[speciesName] || '',
+          order: occ.order,
+          family: occ.family || 'Unknown',
+          count: 1,
+          gbifKey: occ.speciesKey || occ.taxonKey || 0,
+        });
+      }
+
+      // Create marker
+      const marker = L.circleMarker([occ.decimalLatitude, occ.decimalLongitude], {
+        radius: 6,
+        fillColor: getColorForOrder(occ.order),
+        color: '#fff',
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.8,
+      });
+
+      const date = occ.eventDate
+        ? new Date(occ.eventDate).toLocaleDateString()
+        : 'Date unknown';
+
+      marker.bindPopup(`
+        <strong>${speciesName}</strong><br>
+        Order: ${occ.order}<br>
+        Date: ${date}<br>
+        ${occ.stateProvince ? `Location: ${occ.stateProvince}<br>` : ''}
+        <button class="popup-species-btn" onclick="window.openSpeciesModal('${speciesName.replace(/'/g, "\\'")}')">View Species Details</button>
+      `);
+
+      marker.addTo(map);
+      markers.push(marker);
+    }
+
+    // Render species list
+    renderSpeciesList();
+
+    elCount.textContent = `${filteredOccurrences.length} sightings`;
+    elSpecies.textContent = `${speciesData.size} species`;
   }
 
   function getColorForOrder(order: string): string {
@@ -648,7 +826,7 @@
   }
 
   #birds-map {
-    height: 500px;
+    height: 600px;
     border-radius: 12px;
     border: 1px solid #e5e7eb;
     overflow: hidden;
@@ -771,6 +949,17 @@
     background: #f3f4f6;
     border-radius: 6px;
     font-weight: 500;
+  }
+
+  .cache-status {
+    font-weight: 400;
+    font-size: 0.8125rem;
+    color: var(--color-muted);
+    background: transparent;
+  }
+
+  .cache-status.fresh {
+    color: #059669;
   }
 
   .birds-attribution {
@@ -1024,7 +1213,7 @@
 
   @media (max-width: 640px) {
     #birds-map {
-      height: 350px;
+      height: 420px;
     }
 
     .birds-controls {

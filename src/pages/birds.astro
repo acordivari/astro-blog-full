@@ -4,15 +4,17 @@ import BirdsOfPreyMap from '../components/BirdsOfPreyMap.astro';
 ---
 
 <BaseLayout title="Birds of Prey - Andrew Cordivari" description="Birds of prey sightings near Boulder, Colorado from GBIF">
-  <h1>Birds of Prey</h1>
-  <p class="intro">Exploring raptor sightings in the Boulder, Colorado area using data from the Global Biodiversity Information Facility.</p>
-  <p class="intro">Raptors fascinated me from an early age and I had the privilege of frquenting <a href="https://www.theraptortrust.org/" target= "_blank">The Raptor Trust</a> in Millington, New Jersey.
-    Colorado is an incredible environment for these magnificent creatures and I've literally seen hundreds of bald eagles, golden eagles, kestrels, red tail hawks, and even a few species of owls 
-    while I've lived here. One of my favorite species is the Ferruginous hawk. They don't live in the North East but are large enough that they 
-    share some similarities with golden eagles. I set up client-side requests that aggregate photos, descriptions, and location 
-    reports from multiple sources listed below. This was necessary to get the highest quality photos, descriptions, 
-    and genus classifications. 
-  </p>
+  <article class="page-content">
+    <header class="page-header">
+      <h1>Birds of Prey</h1>
+      <p class="lead">Exploring raptor sightings in the Boulder, Colorado area using data from the Global Biodiversity Information Facility.</p>
+    </header>
+
+    <aside class="story-card">
+      <p>Raptors fascinated me from an early age and I had the privilege of frequenting <a href="https://www.theraptortrust.org/" target="_blank" rel="noopener">The Raptor Trust</a> in Millington, New Jersey. Colorado is an incredible environment for these magnificent creatures and I've literally seen hundreds of bald eagles, golden eagles, kestrels, red-tailed hawks, and even a few species of owls while I've lived here.</p>
+      <p>One of my favorite species is the Ferruginous Hawk. They don't live in the Northeast but are large enough that they share some similarities with golden eagles. I set up client-side requests that aggregate photos, descriptions, and location reports from multiple sources listed below. This was necessary to get the highest quality photos, descriptions, and genus classifications.</p>
+    </aside>
+  </article>
 
   <BirdsOfPreyMap />
 
@@ -34,47 +36,128 @@ import BirdsOfPreyMap from '../components/BirdsOfPreyMap.astro';
 </BaseLayout>
 
 <style>
-  h1 {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
+  /* Page Content Container */
+  .page-content {
+    max-width: 720px;
+    margin-bottom: 3rem;
   }
 
-  .intro {
-    color: var(--color-muted);
+  /* Page Header */
+  .page-header {
     margin-bottom: 2rem;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 5vw, 2.75rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    color: var(--color-text);
+  }
+
+  .lead {
+    font-size: 1.125rem;
+    line-height: 1.6;
+    color: var(--color-muted);
     max-width: 600px;
   }
 
+  /* Story Card - Accent Style */
+  .story-card {
+    background: linear-gradient(to right, rgba(139, 92, 246, 0.04), transparent);
+    border-left: 3px solid var(--color-accent);
+    padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    border-radius: 0 8px 8px 0;
+    margin: 0;
+  }
+
+  .story-card p {
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--color-text);
+    margin: 0;
+  }
+
+  .story-card p + p {
+    margin-top: 1rem;
+  }
+
+  /* Link States */
+  .story-card a {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    border-bottom: 1px solid transparent;
+  }
+
+  .story-card a:hover {
+    border-bottom-color: var(--color-accent);
+  }
+
+  .story-card a:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .story-card a:active {
+    opacity: 0.8;
+  }
+
+  /* About Data Section */
   .about-data {
-    margin-top: 3rem;
-    padding-top: 2rem;
+    margin-top: 3.5rem;
+    padding-top: 2.5rem;
     border-top: 1px solid #e5e7eb;
+    max-width: 720px;
   }
 
   .about-data h2 {
     font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     margin-bottom: 1rem;
+    color: var(--color-text);
   }
 
   .about-data h3 {
-    font-size: 1rem;
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+    margin-top: 2rem;
+    margin-bottom: 1rem;
   }
 
   .about-data p {
     color: var(--color-muted);
+    font-size: 0.9375rem;
     line-height: 1.7;
-    max-width: 700px;
   }
 
   .about-data a {
     color: var(--color-accent);
     text-decoration: none;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    border-bottom: 1px solid transparent;
   }
 
   .about-data a:hover {
-    text-decoration: underline;
+    border-bottom-color: var(--color-accent);
+  }
+
+  .about-data a:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .about-data a:active {
+    opacity: 0.8;
   }
 
   .species-list {
@@ -82,36 +165,57 @@ import BirdsOfPreyMap from '../components/BirdsOfPreyMap.astro';
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.625rem;
   }
 
   .species-list li {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.75rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
     color: var(--color-muted);
+    padding: 0.5rem 0;
   }
 
   .species-list strong {
     color: var(--color-text);
+    font-weight: 600;
   }
 
   .dot {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     flex-shrink: 0;
+    margin-top: 0.3rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   }
 
   .dot.red {
-    background: #ef4444;
+    background: linear-gradient(135deg, #f87171, #dc2626);
   }
 
   .dot.orange {
-    background: #f97316;
+    background: linear-gradient(135deg, #fb923c, #ea580c);
   }
 
   .dot.blue {
-    background: #3b82f6;
+    background: linear-gradient(135deg, #60a5fa, #2563eb);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 640px) {
+    .page-content {
+      margin-bottom: 2rem;
+    }
+
+    .story-card {
+      padding: 1.25rem 1.25rem 1.25rem 1.5rem;
+    }
+
+    .lead {
+      font-size: 1rem;
+    }
   }
 </style>
