@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TagList from '../../components/TagList.astro';
+import TechSpecs from '../../components/TechSpecs.astro';
 import { getCollection } from 'astro:content';
 import { getBrandSlug } from '../../content/brands';
 
@@ -54,6 +55,10 @@ const brandSlug = post.data.brand ? getBrandSlug(post.data.brand) : undefined;
     <div class="content">
       <Content />
     </div>
+
+    {post.data.techSpecs && post.data.techSpecs.length > 0 && (
+      <TechSpecs specs={post.data.techSpecs} sourceUrl={post.data.techSpecsSourceUrl} />
+    )}
   </article>
 
   <nav class="back">

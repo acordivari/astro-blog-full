@@ -6,6 +6,16 @@ tags: ["technical", "minimalist", "outerwear"]
 brand: "Outlier"
 fabric: "Injex (Injected Linen)"
 draft: false
+techSpecs:
+  - label: "Fabric"
+    value: "59% Linen, 41% Polyester (Injected Linen)"
+  - label: "Construction"
+    value: "Warp-knit, weft-insertion (flatblind) — knit in Japan"
+  - label: "Fabric Weight"
+    value: "170 GSM"
+  - label: "Breathability"
+    value: "Extremely high"
+techSpecsSourceUrl: "https://outlier.nyc/fabrics/injected-linen"
 ---
 
 Review content coming soon.

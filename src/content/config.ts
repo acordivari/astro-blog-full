@@ -15,6 +15,11 @@ const reviews = defineCollection({
     brand: z.string().optional(),
     fabric: z.string().optional(),
     draft: z.boolean().default(false),
+    techSpecs: z.array(z.object({
+      label: z.string(),
+      value: z.string(),
+    })).optional(),
+    techSpecsSourceUrl: z.string().optional(),
   }),
 });
 
