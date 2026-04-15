@@ -195,6 +195,14 @@
     return sortedKeys.filter(k => k.startsWith(prefix));
   }
 
+  /* ── Sauna detection ── */
+  function isSaunaOnly(text: string): boolean {
+    // Strip the word "sauna" (case-insensitive) and any whitespace/punctuation —
+    // if what remains is short, the entry is primarily a sauna visit with no real workout.
+    const stripped = text.replace(/\bsauna\b/gi, '').replace(/[\s,\-:;.!?+&]+/g, '').trim();
+    return stripped.length < 15;
+  }
+
   /* ── Render calendar grid ── */
   function renderCalendar() {
     elLabel.textContent = `${MONTHS[viewMonth]} ${viewYear}`;
@@ -226,7 +234,15 @@
       cell.appendChild(num);
 
       if (hasWorkout) {
-        cell.classList.add('wc-has-workout');
+        const workoutText = workouts.get(key)!;
+        const saunaOnly = /\bsauna\b/i.test(workoutText) && isSaunaOnly(workoutText);
+
+        if (saunaOnly) {
+          cell.classList.add('wc-has-sauna');
+        } else {
+          cell.classList.add('wc-has-workout');
+        }
+
         const dot = document.createElement('span');
         dot.className = 'wc-dot';
         cell.appendChild(dot);
@@ -749,6 +765,23 @@
     background: #ffedd5;
     border-color: #fdba74;
     box-shadow: 0 2px 8px rgba(251, 146, 60, 0.2);
+  }
+
+  .wc-has-sauna {
+    background: linear-gradient(135deg, #fed7aa 0%, #fef08a 100%);
+    border-color: #f59e0b;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .wc-has-sauna:hover {
+    background: linear-gradient(135deg, #fdba74 0%, #fde047 100%);
+    border-color: #d97706;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+  }
+
+  .wc-has-sauna .wc-dot {
+    background: linear-gradient(135deg, #f97316 0%, #eab308 100%);
   }
 
   .wc-dot {
