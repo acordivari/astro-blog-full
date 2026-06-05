@@ -67,9 +67,29 @@ const learning = defineCollection({
   }),
 });
 
+// Fabrics collection - fabric type essays and analysis
+const fabrics = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    publishDate: z.coerce.date(),
+    updatedDate: z.coerce.date().optional(),
+    fabricFamily: z.string(),
+    subtypes: z.array(z.string()).default([]),
+    tags: z.array(z.string()).default([]),
+    draft: z.boolean().default(false),
+    techSpecs: z.array(z.object({
+      label: z.string(),
+      value: z.string(),
+    })).optional(),
+  }),
+});
+
 export const collections = {
   reviews,
   reflections,
   movement,
   learning,
+  fabrics,
 };

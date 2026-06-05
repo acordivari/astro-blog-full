@@ -5,7 +5,7 @@ publishDate: 2026-02-10
 tags: ["technical", "minimalist"]
 brand: "Outlier"
 fabric: "Strongtwill"
-draft: false
+draft: true
 techSpecs:
   - label: "Fabric"
     value: "96% Nylon, 4% Elastane (Supplex air texturized nylon 6.6)"

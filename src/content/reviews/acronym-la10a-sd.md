@@ -4,7 +4,7 @@ description: "Review of Acronym's LA10A-SD."
 publishDate: 2026-02-10
 tags: ["techwear", "technical"]
 brand: "Acronym"
-draft: false
+draft: true
 techSpecs:
   - label: "Fabric"
     value: "Stotz® EtaProof™ Double Layer Weave"

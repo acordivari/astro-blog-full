@@ -5,7 +5,7 @@ publishDate: 2026-02-10
 tags: ["technical", "minimalist"]
 brand: "Outlier"
 fabric: "Cannabiscotton"
-draft: false
+draft: true
 techSpecs:
   - label: "Fabric"
     value: "55% Hemp, 44% Cotton, 1% Elastane"

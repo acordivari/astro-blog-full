@@ -5,7 +5,7 @@ publishDate: 2026-02-10
 tags: ["technical", "minimalist", "merino"]
 brand: "Outlier"
 fabric: "Ultrafine Merino"
-draft: false
+draft: true
 techSpecs:
   - label: "Fabric"
     value: "100% 16.5 Micron Top Capped Merino"

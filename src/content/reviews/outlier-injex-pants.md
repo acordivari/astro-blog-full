@@ -5,7 +5,7 @@ publishDate: 2026-02-10
 tags: ["technical", "minimalist"]
 brand: "Outlier"
 fabric: "Injex (Injected Linen)"
-draft: false
+draft: true
 techSpecs:
   - label: "Fabric"
     value: "59% Linen, 41% Polyester (Injected Linen)"

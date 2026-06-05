@@ -30,16 +30,16 @@ const { specs, sourceUrl } = Astro.props;
   .tech-specs {
     margin-top: 2.5rem;
     padding-top: 2rem;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--color-border);
   }
 
   .tech-specs h2 {
-    font-size: 1.125rem;
-    font-weight: 600;
+    font-size: 0.6875rem;
+    font-weight: 400;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--color-muted, #6b7280);
-    margin-bottom: 1.25rem;
+    letter-spacing: 0.14em;
+    color: var(--color-muted);
+    margin-bottom: 1rem;
   }
 
   dl {
@@ -51,7 +51,7 @@ const { specs, sourceUrl } = Astro.props;
     grid-template-columns: 10rem 1fr;
     gap: 0.5rem 1.5rem;
     padding: 0.625rem 0;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--color-border);
   }
 
   .spec-row:last-child {
@@ -59,11 +59,11 @@ const { specs, sourceUrl } = Astro.props;
   }
 
   dt {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.6875rem;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-muted, #6b7280);
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
     padding-top: 0.125rem;
   }
 
@@ -71,22 +71,23 @@ const { specs, sourceUrl } = Astro.props;
     margin: 0;
     font-size: 0.9375rem;
     line-height: 1.6;
-    color: var(--color-text, inherit);
+    color: var(--color-text);
     white-space: pre-line;
   }
 
   .source {
     margin-top: 1rem;
     font-size: 0.8125rem;
-    color: var(--color-muted, #6b7280);
+    color: var(--color-muted);
   }
 
   .source a {
-    color: var(--color-accent);
-    text-decoration: none;
+    color: var(--color-text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 
   .source a:hover {
-    text-decoration: underline;
+    color: var(--color-muted);
   }
 </style>

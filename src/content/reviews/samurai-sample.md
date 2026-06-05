@@ -4,7 +4,7 @@ description: "A placeholder review for Samurai products."
 publishDate: 2026-01-22
 tags: ["denim", "japanese"]
 brand: "Samurai"
-draft: false
+draft: true
 ---
 
 This is a placeholder review. Replace with your actual Samurai review content.

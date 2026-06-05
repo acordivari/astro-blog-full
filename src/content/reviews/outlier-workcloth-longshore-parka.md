@@ -5,7 +5,7 @@ publishDate: 2026-02-10
 tags: ["technical", "minimalist", "outerwear"]
 brand: "Outlier"
 fabric: "Workcloth (Schoeller Doubleweave)"
-draft: false
+draft: true
 techSpecs:
   - label: "Fabric"
     value: "82% Nylon, 16% Polyester, 2% Elastane (Schoeller Doubleweave)"

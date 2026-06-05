@@ -3,12 +3,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import BirdsOfPreyMap from '../components/BirdsOfPreyMap.astro';
 ---
 
-<BaseLayout title="Birds of Prey - Andrew Cordivari" description="Birds of prey sightings near Boulder, Colorado from GBIF">
+<BaseLayout title="Birds of Prey — Andrew Cordivari" description="Birds of prey sightings near Boulder, Colorado from GBIF">
   <article class="page-content">
-    <header class="page-header">
+    <div class="page-header">
+      <span class="eyebrow">Field Notes</span>
       <h1>Birds of Prey</h1>
       <p class="lead">Exploring raptor sightings in the Boulder, Colorado area using data from the Global Biodiversity Information Facility.</p>
-    </header>
+    </div>
 
     <aside class="story-card">
       <p>Raptors fascinated me from an early age and I had the privilege of frequenting <a href="https://www.theraptortrust.org/" target="_blank" rel="noopener">The Raptor Trust</a> in Millington, New Jersey. Colorado is an incredible environment for these magnificent creatures and I've literally seen hundreds of bald eagles, golden eagles, kestrels, red-tailed hawks, and even a few species of owls while I've lived here.</p>
@@ -36,45 +37,47 @@ import BirdsOfPreyMap from '../components/BirdsOfPreyMap.astro';
 </BaseLayout>
 
 <style>
-  /* Page Content Container */
   .page-content {
     max-width: 720px;
+    padding-top: 3.5rem;
     margin-bottom: 3rem;
   }
 
-  /* Page Header */
   .page-header {
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .eyebrow {
+    display: block;
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    margin-bottom: 1rem;
   }
 
   h1 {
-    font-size: clamp(2rem, 5vw, 2.75rem);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    line-height: 1.2;
-    margin-bottom: 1rem;
-    color: var(--color-text);
+    font-size: clamp(3rem, 6vw, 5rem);
+    line-height: 1.0;
+    margin-bottom: 1.25rem;
   }
 
   .lead {
-    font-size: 1.125rem;
-    line-height: 1.6;
+    font-size: 1rem;
+    line-height: 1.7;
     color: var(--color-muted);
-    max-width: 600px;
+    max-width: 58ch;
   }
 
-  /* Story Card - Accent Style */
   .story-card {
-    background: linear-gradient(to right, rgba(139, 92, 246, 0.04), transparent);
-    border-left: 3px solid var(--color-accent);
-    padding: 1.5rem 1.5rem 1.5rem 1.75rem;
-    border-radius: 0 8px 8px 0;
+    border-left: 1px solid var(--color-border);
+    padding: 0 0 0 1.5rem;
     margin: 0;
   }
 
   .story-card p {
-    font-size: 1rem;
-    line-height: 1.75;
+    font-size: 0.9375rem;
+    line-height: 1.8;
     color: var(--color-text);
     margin: 0;
   }
@@ -83,50 +86,38 @@ import BirdsOfPreyMap from '../components/BirdsOfPreyMap.astro';
     margin-top: 1rem;
   }
 
-  /* Link States */
   .story-card a {
-    color: var(--color-accent);
-    text-decoration: none;
-    font-weight: 500;
-    transition: all 0.15s ease;
-    border-bottom: 1px solid transparent;
+    color: var(--color-text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--color-border);
+    transition: text-decoration-color 0.15s;
   }
 
   .story-card a:hover {
-    border-bottom-color: var(--color-accent);
+    text-decoration-color: var(--color-text);
   }
 
-  .story-card a:focus {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
-    border-radius: 2px;
-  }
-
-  .story-card a:active {
-    opacity: 0.8;
-  }
-
-  /* About Data Section */
   .about-data {
     margin-top: 3.5rem;
     padding-top: 2.5rem;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--color-border);
     max-width: 720px;
   }
 
   .about-data h2 {
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 300;
     letter-spacing: -0.01em;
-    margin-bottom: 1rem;
-    color: var(--color-text);
+    margin-bottom: 0.75rem;
   }
 
   .about-data h3 {
-    font-size: 0.875rem;
-    font-weight: 600;
+    font-size: 0.6875rem;
+    font-weight: 400;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.12em;
     color: var(--color-muted);
     margin-top: 2rem;
     margin-bottom: 1rem;
@@ -135,29 +126,19 @@ import BirdsOfPreyMap from '../components/BirdsOfPreyMap.astro';
   .about-data p {
     color: var(--color-muted);
     font-size: 0.9375rem;
-    line-height: 1.7;
+    line-height: 1.75;
   }
 
   .about-data a {
-    color: var(--color-accent);
-    text-decoration: none;
-    font-weight: 500;
-    transition: all 0.15s ease;
-    border-bottom: 1px solid transparent;
+    color: var(--color-text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--color-border);
+    transition: text-decoration-color 0.15s;
   }
 
   .about-data a:hover {
-    border-bottom-color: var(--color-accent);
-  }
-
-  .about-data a:focus {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
-    border-radius: 2px;
-  }
-
-  .about-data a:active {
-    opacity: 0.8;
+    text-decoration-color: var(--color-text);
   }
 
   .species-list {
@@ -165,57 +146,43 @@ import BirdsOfPreyMap from '../components/BirdsOfPreyMap.astro';
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.625rem;
   }
 
   .species-list li {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 0.75rem;
     font-size: 0.9375rem;
     line-height: 1.5;
     color: var(--color-muted);
-    padding: 0.5rem 0;
+    padding: 0.625rem 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .species-list li:first-child {
+    border-top: 1px solid var(--color-border);
   }
 
   .species-list strong {
     color: var(--color-text);
-    font-weight: 600;
+    font-weight: 500;
   }
 
   .dot {
-    width: 12px;
-    height: 12px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     flex-shrink: 0;
-    margin-top: 0.3rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   }
 
-  .dot.red {
-    background: linear-gradient(135deg, #f87171, #dc2626);
-  }
+  .dot.red   { background: #ef4444; }
+  .dot.orange { background: #f97316; }
+  .dot.blue  { background: #3b82f6; }
 
-  .dot.orange {
-    background: linear-gradient(135deg, #fb923c, #ea580c);
-  }
-
-  .dot.blue {
-    background: linear-gradient(135deg, #60a5fa, #2563eb);
-  }
-
-  /* Responsive adjustments */
   @media (max-width: 640px) {
     .page-content {
+      padding-top: 2.5rem;
       margin-bottom: 2rem;
-    }
-
-    .story-card {
-      padding: 1.25rem 1.25rem 1.25rem 1.5rem;
-    }
-
-    .lead {
-      font-size: 1rem;
     }
   }
 </style>

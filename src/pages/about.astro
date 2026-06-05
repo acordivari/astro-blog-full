@@ -2,66 +2,111 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="About" description="Why I created this">
+<BaseLayout title="About" description="About Andrew Cordivari">
   <article class="about">
-    <h1>About</h1>
+    <div class="about-header">
+      <span class="eyebrow">About</span>
+      <h1>This site.</h1>
+    </div>
 
-    <p>
-      Welcome. This is a space dedicated to fashion, style, and personal reflections.
-    </p>
+    <div class="prose">
+      <p>
+        This is a space for writing about cloth, movement, and the things that hold attention over time.
+      </p>
 
-    <p>
-      Here you'll find honest reviews of fashion items, brands, and trends,
-      along with personal essays on style and self-expression.
-    </p>
+      <p>
+        The fabrics section is the center of gravity — essays on the fibers, weaves, and constructions that define how clothing actually performs and ages. Merino wool, alpaca, technical synthetics like Gore-Tex and Schoeller, and the engineering of cotton from selvedge denim to Ventile.
+      </p>
 
-    <h2>Sections</h2>
+      <h2>Sections</h2>
 
-    <ul>
-      <li><strong>Reviews</strong> - In-depth reviews of clothing, accessories, and brands with searchable tags</li>
-      <li><strong>Reflections</strong> - Personal thoughts on fashion, style, and industry trends</li>
-    </ul>
+      <ul>
+        <li><strong>Fabrics</strong> — Material essays on fiber, weave, and construction</li>
+        <li><strong>Reflections</strong> — Longer thoughts on style and material culture</li>
+        <li><strong>Learning</strong> — Notes from ongoing curiosity</li>
+        <li><strong>Movement</strong> — A physical practice journal</li>
+        <li><strong>Music</strong> — What's been on rotation</li>
+        <li><strong>Birds</strong> — Field observations</li>
+      </ul>
 
-    <h2>Contact</h2>
+      <h2>Contact</h2>
 
-    <p>
-      Get in touch at <a href="mailto:hello@blog26.com">hello@blog26.com</a>
-    </p>
+      <p>
+        <a href="mailto:andrew.cordivari@gmail.com">andrew.cordivari@gmail.com</a>
+      </p>
+    </div>
   </article>
 </BaseLayout>
 
 <style>
   .about {
-    max-width: 65ch;
+    max-width: 60ch;
     margin: 0 auto;
   }
 
+  .about-header {
+    padding: 4rem 0 3rem;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 2.5rem;
+  }
+
+  .eyebrow {
+    display: block;
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    margin-bottom: 1rem;
+  }
+
   h1 {
-    font-size: 2.5rem;
-    margin-bottom: 1.5rem;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
   }
 
-  h2 {
-    font-size: 1.5rem;
-    margin-top: 2rem;
-    margin-bottom: 1rem;
-  }
-
-  p {
-    margin-bottom: 1rem;
+  .prose {
+    font-size: 1rem;
     line-height: 1.8;
   }
 
-  ul {
+  .prose p {
+    margin-bottom: 1.25rem;
+  }
+
+  .prose h2 {
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    font-weight: 400;
+    margin-top: 2.5rem;
     margin-bottom: 1rem;
-    padding-left: 1.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-border);
   }
 
-  li {
-    margin-bottom: 0.5rem;
+  .prose ul {
+    padding-left: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
   }
 
-  a {
-    color: var(--color-accent);
+  .prose li {
+    padding: 0.625rem 0;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.9375rem;
+  }
+
+  .prose strong {
+    font-weight: 600;
+  }
+
+  .prose a {
+    color: var(--color-text);
+    text-underline-offset: 3px;
   }
 </style>

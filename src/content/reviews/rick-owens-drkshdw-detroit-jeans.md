@@ -4,7 +4,7 @@ description: "Review of Rick Owens Heavyweight DRKSHDW Detroit Jeans, Made in Ja
 publishDate: 2026-02-10
 tags: ["avant-garde", "denim", "designer"]
 brand: "Rick Owens"
-draft: false
+draft: true
 techSpecs:
   - label: "Fabric"
     value: "16oz Black Waxed (Over Indigo) Japanese Selvedge Denim"

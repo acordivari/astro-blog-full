@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import Search from '../../components/Search.astro';
 import { getCollection } from 'astro:content';
 
 const reflections = await getCollection('reflections', ({ data }) => !data.draft);
@@ -9,23 +8,26 @@ const sortedReflections = reflections.sort(
 );
 ---
 
-<BaseLayout title="Reflections - Blog26" description="Personal thoughts on fashion and style">
-  <h1>Reflections</h1>
-  <p class="intro">Personal thoughts on fashion, style, and self-expression.</p>
-
-  <Search />
+<BaseLayout title="Reflections" description="Personal thoughts on style, craft, and material culture.">
+  <div class="page-header">
+    <span class="eyebrow">Writing</span>
+    <h1>Reflections</h1>
+    <p class="lede">Personal thoughts on style, craft, and material culture.</p>
+  </div>
 
   <section class="posts">
     {sortedReflections.length > 0 ? (
       sortedReflections.map((post) => (
-        <article class="post">
+        <article class="post-row">
           <a href={`/reflections/${post.slug}`}>
-            <h2>{post.data.title}</h2>
-            <p>{post.data.description}</p>
+            <div class="post-body">
+              <h2>{post.data.title}</h2>
+              <p>{post.data.description}</p>
+            </div>
             <time datetime={post.data.publishDate.toISOString()}>
               {post.data.publishDate.toLocaleDateString('en-US', {
                 year: 'numeric',
-                month: 'long',
+                month: 'short',
                 day: 'numeric',
               })}
             </time>
@@ -33,71 +35,100 @@ const sortedReflections = reflections.sort(
         </article>
       ))
     ) : (
-      <p class="empty">No reflections yet. Create your first in <code>src/content/reflections/</code></p>
+      <p class="empty">No reflections yet.</p>
     )}
   </section>
 </BaseLayout>
 
 <style>
-  h1 {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
+  .page-header {
+    padding: 4rem 0 3rem;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 0;
   }
 
-  .intro {
+  .eyebrow {
+    display: block;
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     color: var(--color-muted);
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    margin-bottom: 1rem;
+  }
+
+  .lede {
+    font-size: 1.125rem;
+    color: var(--color-muted);
+    line-height: 1.6;
   }
 
   .posts {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
   }
 
-  .post {
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    transition: box-shadow 0.2s;
+  .post-row {
+    border-bottom: 1px solid var(--color-border);
   }
 
-  .post:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  .post a {
-    display: block;
-    padding: 1.5rem;
+  .post-row a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    padding: 1.5rem 0;
     text-decoration: none;
     color: inherit;
   }
 
-  .post h2 {
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem;
+  .post-row a:hover h2 {
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 
-  .post p {
-    color: var(--color-muted);
-    margin-bottom: 0.75rem;
+  .post-body {
+    flex: 1;
   }
 
-  .post time {
+  .post-row h2 {
+    font-size: 1.0625rem;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    margin-bottom: 0.25rem;
+  }
+
+  .post-row p {
     font-size: 0.875rem;
     color: var(--color-muted);
+    line-height: 1.5;
+  }
+
+  .post-row time {
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .empty {
     color: var(--color-muted);
-    padding: 2rem;
-    text-align: center;
-    background: #f9fafb;
-    border-radius: 8px;
+    padding: 3rem 0;
+    font-size: 0.9375rem;
   }
 
-  .empty code {
-    background: #e5e7eb;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
+  @media (max-width: 600px) {
+    .post-row a {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
   }
 </style>

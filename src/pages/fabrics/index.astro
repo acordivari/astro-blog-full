@@ -1,0 +1,195 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const fabrics = await getCollection('fabrics', ({ data }) => !data.draft);
+const sortedFabrics = fabrics.sort(
+  (a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf()
+);
+
+const familyOrder = ['wool', 'synthetic', 'cotton'];
+const grouped = familyOrder.reduce((acc, family) => {
+  acc[family] = sortedFabrics.filter((f) => f.data.fabricFamily === family);
+  return acc;
+}, {} as Record<string, typeof sortedFabrics>);
+
+const familyLabels: Record<string, string> = {
+  wool: 'Wool',
+  synthetic: 'Synthetics',
+  cotton: 'Cotton',
+};
+---
+
+<BaseLayout title="Fabrics" description="Essays on fabric types, construction, and performance characteristics.">
+  <div class="page-header">
+    <span class="eyebrow">Material Index</span>
+    <h1>Fabrics</h1>
+    <p class="lede">On the fibers, weaves, and constructions that define how clothing actually works.</p>
+  </div>
+
+  <div class="fabric-index">
+    {familyOrder.map((family) => {
+      const items = grouped[family];
+      if (!items || items.length === 0) return null;
+      return (
+        <section class="family-group">
+          <h2 class="family-label">{familyLabels[family]}</h2>
+          <div class="fabric-list">
+            {items.map((fabric) => (
+              <article class="fabric-entry">
+                <a href={`/fabrics/${fabric.slug}`}>
+                  <div class="fabric-entry-inner">
+                    <h3>{fabric.data.title}</h3>
+                    <p>{fabric.data.description}</p>
+                    {fabric.data.subtypes.length > 0 && (
+                      <ul class="subtypes">
+                        {fabric.data.subtypes.map((s) => <li>{s}</li>)}
+                      </ul>
+                    )}
+                  </div>
+                  <span class="read-link">Read &rarr;</span>
+                </a>
+              </article>
+            ))}
+          </div>
+        </section>
+      );
+    })}
+  </div>
+</BaseLayout>
+
+<style>
+  .page-header {
+    padding: 4rem 0 3rem;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 3rem;
+  }
+
+  .eyebrow {
+    display: block;
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    margin-bottom: 1rem;
+  }
+
+  .lede {
+    font-size: 1.125rem;
+    color: var(--color-muted);
+    max-width: 52ch;
+    line-height: 1.6;
+  }
+
+  .fabric-index {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .family-group {
+    border-top: 1px solid var(--color-border);
+    padding-top: 2rem;
+  }
+
+  .family-label {
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    font-weight: 400;
+    margin-bottom: 1.5rem;
+  }
+
+  .fabric-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .fabric-entry {
+    border-top: 1px solid var(--color-border);
+  }
+
+  .fabric-entry:last-child {
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .fabric-entry a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 0;
+    text-decoration: none;
+    color: inherit;
+    gap: 2rem;
+  }
+
+  .fabric-entry a:hover h3 {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .fabric-entry-inner {
+    flex: 1;
+  }
+
+  .fabric-entry h3 {
+    font-size: 1.25rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.375rem;
+  }
+
+  .fabric-entry p {
+    color: var(--color-muted);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    max-width: 65ch;
+  }
+
+  .subtypes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    list-style: none;
+    margin-top: 0.75rem;
+  }
+
+  .subtypes li {
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    border: 1px solid var(--color-border);
+    padding: 0.2rem 0.5rem;
+  }
+
+  .read-link {
+    font-size: 0.875rem;
+    letter-spacing: 0.04em;
+    color: var(--color-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 600px) {
+    .fabric-entry a {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .read-link {
+      display: none;
+    }
+  }
+</style>

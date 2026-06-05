@@ -4,7 +4,7 @@ description: "Review of Devoa's NON-EPHEMERAL JEANS."
 publishDate: 2026-02-10
 tags: ["avant-garde", "denim"]
 brand: "Devoa"
-draft: false
+draft: true
 techSpecs:
   - label: "Fabric"
     value: "16.5oz Japanese Selvedge Denim"

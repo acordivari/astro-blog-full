@@ -24,7 +24,7 @@ const brandSlug = post.data.brand ? getBrandSlug(post.data.brand) : undefined;
   image={post.data.image}
 >
   <article class="review" data-pagefind-body data-pagefind-meta={`tags:${post.data.tags.join(', ')}${post.data.brand ? `, brand:${post.data.brand}` : ''}`}>
-    <header>
+    <div class="article-header">
       <h1>{post.data.title}</h1>
       <div class="meta">
         <time datetime={post.data.publishDate.toISOString()}>
@@ -42,7 +42,7 @@ const brandSlug = post.data.brand ? getBrandSlug(post.data.brand) : undefined;
         )}
       </div>
       <TagList tags={post.data.tags} />
-    </header>
+    </div>
 
     {post.data.image && (
       <img

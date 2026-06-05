@@ -5,7 +5,7 @@ publishDate: 2026-02-10
 tags: ["technical", "minimalist"]
 brand: "Outlier"
 fabric: "F.Cloth (Futurecloth)"
-draft: false
+draft: true
 techSpecs:
   - label: "Fabric"
     value: "97% Nylon, 3% Elastane (Futurecloth / F.Cloth)"

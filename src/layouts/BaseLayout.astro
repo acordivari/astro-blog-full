@@ -5,8 +5,18 @@ interface Props {
   image?: string;
 }
 
-const { title, description = 'A fashion blog', image } = Astro.props;
+const { title, description = 'Andrew Cordivari', image } = Astro.props;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const currentPath = Astro.url.pathname;
+
+const navLinks = [
+  { href: '/about', label: 'About' },
+  { href: '/birds', label: 'Birds' },
+  { href: '/fabrics', label: 'Fabrics' },
+  { href: '/learning', label: 'Learning' },
+  { href: '/movement', label: 'Movement' },
+  { href: '/music', label: 'Music' },
+];
 ---
 
 <!doctype html>
@@ -16,51 +26,59 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
 
-    <!-- SEO -->
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
 
-    <!-- Open Graph -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalURL} />
     {image && <meta property="og:image" content={new URL(image, Astro.site)} />}
 
-    <!-- Pagefind Search -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
     <link href="/pagefind/pagefind-ui.css" rel="stylesheet" />
     <script is:inline src="/pagefind/pagefind-ui.js"></script>
   </head>
   <body>
-    <header>
-      <nav>
-        <a href="/" class="logo">Andrew Cordivari</a>
-        <ul>
-          <li><a href="/about">About</a></li>
-          <li><a href="/birds">Birds</a></li>
-          <li><a href="/learning">Learning</a></li>
-          <li><a href="/movement">Movement</a></li>
-          <li><a href="/music">Music</a></li>
-          <li><a href="/reflections">Reflections</a></li>
-          <li><a href="/reviews">Reviews</a></li>
-        </ul>
+    <header class="site-header">
+      <div class="nav-inner">
+        <a href="/" class="wordmark">Andrew Cordivari</a>
+
+        <nav class="primary-nav" aria-label="Primary navigation">
+          <ul>
+            {navLinks.map(({ href, label }) => (
+              <li>
+                <a
+                  href={href}
+                  class:list={['nav-link', { active: currentPath.startsWith(href) }]}
+                >
+                  {label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
         <button id="search-btn" class="search-btn" aria-label="Search">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"></circle>
             <path d="m21 21-4.35-4.35"></path>
           </svg>
         </button>
-      </nav>
+      </div>
     </header>
 
     <!-- Search Modal -->
-    <div id="search-modal" class="search-modal">
-      <div class="search-modal-backdrop"></div>
-      <div class="search-modal-content">
-        <div class="search-modal-header">
-          <span>Search</span>
-          <button id="search-close" class="search-close" aria-label="Close">&times;</button>
+    <div id="search-modal" class="search-modal" role="dialog" aria-label="Search">
+      <div class="search-backdrop"></div>
+      <div class="search-panel">
+        <div class="search-panel-header">
+          <span class="search-label">Search</span>
+          <button id="search-close" aria-label="Close search">&times;</button>
         </div>
         <div id="search-container"></div>
       </div>
@@ -71,58 +89,43 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         const modal = document.getElementById('search-modal');
         const searchBtn = document.getElementById('search-btn');
         const closeBtn = document.getElementById('search-close');
-        const backdrop = document.querySelector('.search-modal-backdrop');
-        let searchInitialized = false;
+        const backdrop = modal.querySelector('.search-backdrop');
+        let initialized = false;
 
-        function openSearch() {
+        function open() {
           modal.classList.add('open');
           document.body.style.overflow = 'hidden';
-
-          // Initialize Pagefind on first open
-          if (!searchInitialized && typeof PagefindUI !== 'undefined') {
+          if (!initialized && typeof PagefindUI !== 'undefined') {
             new PagefindUI({
               element: '#search-container',
               showSubResults: true,
               showImages: false,
               excerptLength: 15,
-              translations: {
-                placeholder: 'Search posts and tags...',
-              },
+              translations: { placeholder: 'Search...' },
             });
-            searchInitialized = true;
+            initialized = true;
           }
-
-          // Focus the search input
           setTimeout(() => {
             const input = document.querySelector('#search-container input');
             if (input) input.focus();
-          }, 100);
+          }, 80);
         }
 
-        function closeSearch() {
+        function close() {
           modal.classList.remove('open');
           document.body.style.overflow = '';
         }
 
-        searchBtn.addEventListener('click', openSearch);
-        closeBtn.addEventListener('click', closeSearch);
-        backdrop.addEventListener('click', closeSearch);
+        searchBtn.addEventListener('click', open);
+        closeBtn.addEventListener('click', close);
+        backdrop.addEventListener('click', close);
 
-        // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
-          // Cmd/Ctrl + K to open search
           if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
             e.preventDefault();
-            if (modal.classList.contains('open')) {
-              closeSearch();
-            } else {
-              openSearch();
-            }
+            modal.classList.contains('open') ? close() : open();
           }
-          // Escape to close
-          if (e.key === 'Escape' && modal.classList.contains('open')) {
-            closeSearch();
-          }
+          if (e.key === 'Escape' && modal.classList.contains('open')) close();
         });
       });
     </script>
@@ -132,21 +135,28 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     </main>
 
     <footer>
-      <p>&copy; {new Date().getFullYear()} Blog26. All rights reserved.</p>
+      <div class="footer-inner">
+        <span class="footer-wordmark">Andrew Cordivari</span>
+        <span class="footer-copy">&copy; {new Date().getFullYear()}</span>
+      </div>
     </footer>
 
     <style is:global>
       :root {
-        --color-bg: #fafafa;
-        --color-text: #1a1a1a;
-        --color-accent: #8b5cf6;
-        --color-muted: #6b7280;
-        --font-sans: system-ui, -apple-system, sans-serif;
-        --font-serif: Georgia, serif;
-        --max-width: 1200px;
+        --color-bg: #ffffff;
+        --color-text: #0a0a0a;
+        --color-muted: #737373;
+        --color-border: #e0e0e0;
+        --color-nav-bg: #0a0a0a;
+        --color-nav-text: #ffffff;
+        --color-nav-muted: rgba(255, 255, 255, 0.45);
+        --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+        --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+        --max-width: 1280px;
+        --nav-height: 56px;
       }
 
-      * {
+      *, *::before, *::after {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
@@ -157,6 +167,8 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         background: var(--color-bg);
         color: var(--color-text);
         line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
 
       body {
@@ -165,83 +177,130 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         flex-direction: column;
       }
 
-      header {
-        border-bottom: 1px solid #e5e7eb;
-        padding: 1rem 2rem;
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
       }
 
-      nav {
+      /* ─── Header / Nav ─────────────────────────────── */
+      .site-header {
+        background: var(--color-nav-bg);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        height: var(--nav-height);
+        display: flex;
+        align-items: center;
+      }
+
+      .nav-inner {
+        max-width: var(--max-width);
+        width: 100%;
+        margin: 0 auto;
+        padding: 0 2rem;
+        display: flex;
+        align-items: center;
+        gap: 2.5rem;
+      }
+
+      .wordmark {
+        color: var(--color-nav-text);
+        text-decoration: none;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .primary-nav ul {
+        display: flex;
+        gap: 0;
+        list-style: none;
+      }
+
+      .nav-link {
+        display: block;
+        padding: 0 0.875rem;
+        height: var(--nav-height);
+        line-height: var(--nav-height);
+        color: var(--color-nav-muted);
+        text-decoration: none;
+        font-size: 0.6875rem;
+        font-weight: 400;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        transition: color 0.15s;
+        white-space: nowrap;
+      }
+
+      .nav-link:hover,
+      .nav-link.active {
+        color: var(--color-nav-text);
+      }
+
+      .search-btn {
+        margin-left: auto;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--color-nav-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem;
+        transition: color 0.15s;
+        flex-shrink: 0;
+      }
+
+      .search-btn:hover {
+        color: var(--color-nav-text);
+      }
+
+      /* ─── Main content ─────────────────────────────── */
+      main {
+        flex: 1;
         max-width: var(--max-width);
         margin: 0 auto;
+        padding: 0 2rem 5rem;
+        width: 100%;
+      }
+
+      h1 {
+        font-family: var(--font-display);
+        font-weight: 300;
+        letter-spacing: -0.02em;
+      }
+
+      /* ─── Footer ───────────────────────────────────── */
+      footer {
+        border-top: 1px solid var(--color-border);
+      }
+
+      .footer-inner {
+        max-width: var(--max-width);
+        margin: 0 auto;
+        padding: 1.5rem 2rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
       }
 
-      .logo {
-        font-size: 1.5rem;
-        font-weight: 700;
-        text-decoration: none;
-        color: var(--color-text);
-      }
-
-      nav ul {
-        display: flex;
-        gap: 2rem;
-        list-style: none;
-      }
-
-      nav a {
-        color: var(--color-text);
-        text-decoration: none;
-        transition: color 0.2s;
-      }
-
-      nav a:hover {
-        color: var(--color-accent);
-      }
-
-      main {
-        flex: 1;
-        max-width: var(--max-width);
-        margin: 0 auto;
-        padding: 2rem;
-        width: 100%;
-      }
-
-      footer {
-        border-top: 1px solid #e5e7eb;
-        padding: 2rem;
-        text-align: center;
+      .footer-wordmark {
+        font-size: 0.6875rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
         color: var(--color-muted);
       }
 
-      img {
-        max-width: 100%;
-        height: auto;
+      .footer-copy {
+        font-size: 0.75rem;
+        color: var(--color-border);
       }
 
-      /* Search Button */
-      .search-btn {
-        background: none;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        padding: 0.5rem;
-        cursor: pointer;
-        color: var(--color-muted);
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .search-btn:hover {
-        background: #f3f4f6;
-        color: var(--color-text);
-        border-color: var(--color-accent);
-      }
-
-      /* Search Modal */
+      /* ─── Search Modal ─────────────────────────────── */
       .search-modal {
         position: fixed;
         inset: 0;
@@ -249,68 +308,58 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         display: none;
         align-items: flex-start;
         justify-content: center;
-        padding: 10vh 1rem 1rem;
+        padding: 8vh 1rem 1rem;
       }
 
       .search-modal.open {
         display: flex;
       }
 
-      .search-modal-backdrop {
+      .search-backdrop {
         position: absolute;
         inset: 0;
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(4px);
+        background: rgba(10, 10, 10, 0.7);
       }
 
-      .search-modal-content {
+      .search-panel {
         position: relative;
-        background: white;
-        border-radius: 12px;
+        background: var(--color-bg);
         width: 100%;
-        max-width: 600px;
-        max-height: 70vh;
+        max-width: 580px;
+        max-height: 72vh;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-        animation: searchModalIn 0.2s ease-out;
         overflow: hidden;
+        box-shadow: 0 32px 64px rgba(0, 0, 0, 0.24);
       }
 
-      @keyframes searchModalIn {
-        from {
-          opacity: 0;
-          transform: scale(0.95) translateY(-10px);
-        }
-        to {
-          opacity: 1;
-          transform: scale(1) translateY(0);
-        }
-      }
-
-      .search-modal-header {
+      .search-panel-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 1rem 1.25rem;
-        border-bottom: 1px solid #e5e7eb;
-        font-weight: 600;
+        border-bottom: 1px solid var(--color-border);
       }
 
-      .search-close {
+      .search-label {
+        font-size: 0.6875rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--color-muted);
+      }
+
+      .search-panel-header button {
         background: none;
         border: none;
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         cursor: pointer;
         color: var(--color-muted);
-        padding: 0.25rem 0.5rem;
-        border-radius: 6px;
+        padding: 0 0.25rem;
         line-height: 1;
-        transition: all 0.2s;
+        transition: color 0.15s;
       }
 
-      .search-close:hover {
-        background: #f3f4f6;
+      .search-panel-header button:hover {
         color: var(--color-text);
       }
 
@@ -319,44 +368,40 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         overflow-y: auto;
       }
 
-      /* Pagefind overrides */
-      .pagefind-ui__form {
-        margin-bottom: 0;
-      }
-
       .pagefind-ui__search-input {
-        border-radius: 8px !important;
+        border-radius: 0 !important;
         font-size: 1rem !important;
+        border: 1px solid var(--color-border) !important;
       }
 
       .pagefind-ui__results-area {
         margin-top: 1rem;
       }
 
-      /* Responsive nav */
-      @media (max-width: 768px) {
-        nav ul {
-          gap: 1rem;
-          font-size: 0.875rem;
+      /* ─── Responsive ───────────────────────────────── */
+      @media (max-width: 900px) {
+        .nav-link {
+          padding: 0 0.625rem;
+          font-size: 0.625rem;
         }
       }
 
-      @media (max-width: 560px) {
-        nav {
-          flex-wrap: wrap;
-          gap: 1rem;
+      @media (max-width: 680px) {
+        .nav-inner {
+          gap: 0;
+          padding: 0 1rem;
         }
 
-        nav ul {
-          order: 3;
-          width: 100%;
-          justify-content: center;
-          flex-wrap: wrap;
-          gap: 0.75rem;
+        .wordmark {
+          margin-right: auto;
+        }
+
+        .primary-nav {
+          display: none;
         }
 
         .search-btn {
-          order: 2;
+          margin-left: 1rem;
         }
       }
     </style>

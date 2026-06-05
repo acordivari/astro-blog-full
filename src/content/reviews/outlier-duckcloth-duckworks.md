@@ -5,7 +5,7 @@ publishDate: 2026-02-10
 tags: ["technical", "minimalist"]
 brand: "Outlier"
 fabric: "Duckcloth"
-draft: false
+draft: true
 techSpecs:
   - label: "Fabric"
     value: "100% Supima Cotton (Duckcloth)"
