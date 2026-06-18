@@ -2,12 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 
-const fabrics = await getCollection('fabrics', ({ data }) => !data.draft);
 const reflections = await getCollection('reflections', ({ data }) => !data.draft);
-
-const latestFabrics = fabrics
-  .sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf())
-  .slice(0, 4);
 
 const latestReflections = reflections
   .sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf())
@@ -17,28 +12,8 @@ const latestReflections = reflections
 <BaseLayout title="Andrew Cordivari">
   <section class="hero">
     <p class="hero-eyebrow">Andrew Cordivari</p>
-    <h1>On cloth,<br/>movement,<br/>and attention.</h1>
+    <h1>Intersections of<br/>life, technology,<br/>nature, and<br/>awareness.</h1>
   </section>
-
-  {latestFabrics.length > 0 && (
-    <section class="section">
-      <div class="section-header">
-        <span class="section-label">Fabrics</span>
-        <a href="/fabrics" class="section-all">View all &rarr;</a>
-      </div>
-      <div class="fabric-grid">
-        {latestFabrics.map((fabric) => (
-          <article class="fabric-card">
-            <a href={`/fabrics/${fabric.slug}`}>
-              <span class="card-family">{fabric.data.fabricFamily}</span>
-              <h3>{fabric.data.title}</h3>
-              <p>{fabric.data.description}</p>
-            </a>
-          </article>
-        ))}
-      </div>
-    </section>
-  )}
 
   {latestReflections.length > 0 && (
     <section class="section">
@@ -121,56 +96,6 @@ const latestReflections = reflections
 
   .section-all:hover {
     color: var(--color-text);
-  }
-
-  /* Fabric grid */
-  .fabric-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 0;
-    border-top: 1px solid var(--color-border);
-    border-left: 1px solid var(--color-border);
-  }
-
-  .fabric-card {
-    border-right: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .fabric-card a {
-    display: block;
-    padding: 1.75rem;
-    text-decoration: none;
-    color: inherit;
-    height: 100%;
-    transition: background 0.15s;
-  }
-
-  .fabric-card a:hover {
-    background: #f7f7f7;
-  }
-
-  .card-family {
-    display: block;
-    font-size: 0.625rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--color-muted);
-    margin-bottom: 0.625rem;
-  }
-
-  .fabric-card h3 {
-    font-size: 1.125rem;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    margin-bottom: 0.5rem;
-    line-height: 1.2;
-  }
-
-  .fabric-card p {
-    font-size: 0.875rem;
-    color: var(--color-muted);
-    line-height: 1.55;
   }
 
   /* Reflection list */

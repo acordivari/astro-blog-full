@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
-  const reflections = await getCollection('reflections');
+  const reflections = await getCollection('reflections', ({ data }) => !data.draft);
   return reflections.map((post) => ({
     params: { slug: post.slug },
     props: { post },

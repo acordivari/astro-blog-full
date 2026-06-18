@@ -2,7 +2,7 @@
 title: "Sample Reflection: On Personal Style"
 description: "Thoughts on developing and embracing your own unique sense of style."
 publishDate: 2026-01-22
-draft: false
+draft: true
 ---
 
 This is a sample reflection to demonstrate the content structure. Delete this file and create your own reflections.
