@@ -7,7 +7,7 @@ const tailscaleHost = env.TAILSCALE_HOST?.trim();
 const allowedHosts = tailscaleHost ? [tailscaleHost] : undefined;
 
 export default defineConfig({
-  site: 'https://blog26.netlify.app',
+  site: 'https://thisisandrew.me',
   integrations: [mdx()],
   server: {
     host: true,
