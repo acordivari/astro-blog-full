@@ -12,7 +12,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <div class="prose">
       <h2>Who I am</h2>
 
-      <p>Human, husband, brother, son, student, friend</p>
+      <p class="oneline">Human, husband, brother, son, student, friend</p>
 
       <h2>What I do</h2>
 
@@ -92,6 +92,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     margin-bottom: 1rem;
     padding-top: 2rem;
     border-top: 1px solid var(--color-border);
+  }
+
+  /* First section heading sits right under the header's divider — drop its own
+     rule so the page shows a single line, like the other pages. */
+  .prose h2:first-of-type {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+
+  /* Keep this short list on one line at every width by scaling the type down
+     on narrow viewports rather than letting it wrap. */
+  .oneline {
+    white-space: nowrap;
+    font-size: min(1rem, 3.6vw);
   }
 
   .prose ul {

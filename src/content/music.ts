@@ -13,7 +13,7 @@ export interface Playlist {
 export const playlists: Playlist[] = [
   {
     name: "Sets",
-    description: "Running list of burner techno, bounce, downtempo, uptempo/psytrance/psytechno...heavily inspired by labels like Akumandra, Souq Records/Alt Orient, KataHaifisch, and Tipping Point. Also includes some favorites from Boom Fest '23 and '25",
+    description: "Running list of burner techno, bounce, downtempo, uptempo, psytrance, psytechno...heavily inspired by labels like Akumandra, Souq Records, Alt Orient, KataHaifisch, and Tipping Point. Also includes some favorites from Boom Fest '23 and '25",
     embedUrl: "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A432070671&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true",
     addedDate: "2026-01-22",
   },
