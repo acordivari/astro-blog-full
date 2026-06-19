@@ -14,7 +14,6 @@ const allTags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
 
 <BaseLayout title="Movement" description="A physical practice journal.">
   <div class="page-header">
-    <span class="eyebrow">Practice</span>
     <h1>Movement</h1>
     <p class="lede">A physical practice journal.</p>
   </div>
@@ -63,15 +62,6 @@ const allTags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
     padding: 3.5rem 0 3rem;
     border-bottom: 1px solid var(--color-border);
     margin-bottom: 2rem;
-  }
-
-  .eyebrow {
-    display: block;
-    font-size: 0.6875rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--color-muted);
-    margin-bottom: 1rem;
   }
 
   h1 {
