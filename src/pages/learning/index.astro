@@ -71,13 +71,16 @@ const projects = [
   },
 ];
 
-// Layers for the rotating-squares centerpiece
-const rings = Array.from({ length: 14 }, (_, i) => ({
-  scale: Math.pow(0.86, i),
-  baseRotation: i * 15,
-  duration: (18 + i * 1.2).toFixed(1),
-  reverse: i % 2 === 1,
-}));
+// Nested solid squares — each 94% of its parent, alternating dark/light fills
+// so only a crisp frame of each shows. The dark layers rotate, and because the
+// squares are nested, that rotation compounds down the tree into a logarithmic
+// spiral that blooms as it sweeps — the mandala from andrewdc92.github.io.
+function nestSquares(depth: number): string {
+  if (depth === 0) return '';
+  const dark = depth % 2 === 0;
+  return `<div class="sq ${dark ? 'dark' : 'light'}">${nestSquares(depth - 1)}</div>`;
+}
+const squares = nestSquares(18);
 ---
 
 <BaseLayout
@@ -91,14 +94,7 @@ const rings = Array.from({ length: 14 }, (_, i) => ({
   </div>
 
   <div class="spiral-stage" aria-hidden="true">
-    <div class="spiral">
-      {rings.map((ring) => (
-        <span
-          class="ring"
-          style={`transform: rotate(${ring.baseRotation}deg) scale(${ring.scale}); animation-duration: ${ring.duration}s; animation-direction: ${ring.reverse ? 'reverse' : 'normal'};`}
-        />
-      ))}
-    </div>
+    <div class="spiral" set:html={squares} />
   </div>
 
   <section class="projects">
@@ -228,29 +224,42 @@ const rings = Array.from({ length: 14 }, (_, i) => ({
 
   .spiral {
     position: relative;
-    width: min(360px, 72vw);
+    width: min(340px, 70vw);
     aspect-ratio: 1;
   }
 
-  .ring {
+  /* Each square is 94% of its parent and centred via negative margin, leaving
+     the transform free to rotate. Nesting makes the rotation compound. */
+  .spiral :global(.sq) {
     position: absolute;
-    inset: 0;
-    border: 1.5px solid var(--color-text);
+    top: 50%;
+    left: 50%;
+    width: 94%;
+    height: 94%;
+    margin: -47% 0 0 -47%;
     transform-origin: center;
-    will-change: rotate;
-    animation-name: bloom;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
+    will-change: transform;
   }
 
-  @keyframes bloom {
-    from { rotate: 0deg; }
-    to { rotate: 360deg; }
+  .spiral :global(.sq.dark) {
+    background: var(--color-text);
+    animation: mandala 13s linear infinite;
+  }
+
+  .spiral :global(.sq.light) {
+    background: var(--color-bg);
+  }
+
+  /* A 90° sweep loops seamlessly — a square looks identical every quarter turn. */
+  @keyframes mandala {
+    from { transform: rotate(90deg); }
+    to { transform: rotate(180deg); }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .ring {
+    .spiral :global(.sq.dark) {
       animation: none;
+      transform: rotate(135deg); /* freeze mid-bloom */
     }
   }
 
