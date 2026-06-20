@@ -235,17 +235,29 @@
 
       if (hasWorkout) {
         const workoutText = workouts.get(key)!;
-        const saunaOnly = /\bsauna\b/i.test(workoutText) && isSaunaOnly(workoutText);
+        const hasSauna = /\bsauna\b/i.test(workoutText);
+        // A "real workout" = meaningful content beyond a sauna mention.
+        // Non-sauna days are always workouts; sauna days only count as a
+        // workout too if there's substantial content left after the sauna word.
+        const hasRealWorkout = !hasSauna || !isSaunaOnly(workoutText);
 
-        if (saunaOnly) {
-          cell.classList.add('wc-has-sauna');
-        } else {
-          cell.classList.add('wc-has-workout');
+        if (hasRealWorkout) cell.classList.add('wc-has-workout');
+        if (hasSauna) cell.classList.add('wc-has-sauna');
+
+        // Render an indicator per type — combined days show both dots.
+        const dots = document.createElement('span');
+        dots.className = 'wc-dots';
+        if (hasRealWorkout) {
+          const d = document.createElement('span');
+          d.className = 'wc-dot wc-dot-workout';
+          dots.appendChild(d);
         }
-
-        const dot = document.createElement('span');
-        dot.className = 'wc-dot';
-        cell.appendChild(dot);
+        if (hasSauna) {
+          const d = document.createElement('span');
+          d.className = 'wc-dot wc-dot-sauna';
+          dots.appendChild(d);
+        }
+        cell.appendChild(dots);
         cell.addEventListener('click', () => openModal(key));
       }
 
@@ -780,8 +792,10 @@
     box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
   }
 
-  .wc-has-sauna .wc-dot {
-    background: linear-gradient(135deg, #f97316 0%, #eab308 100%);
+  .wc-dots {
+    display: flex;
+    gap: 4px;
+    align-items: center;
   }
 
   .wc-dot {
@@ -789,6 +803,15 @@
     height: 8px;
     border-radius: 50%;
     background: #f97316;
+  }
+
+  .wc-dot-workout {
+    background: #f97316;
+  }
+
+  .wc-dot-sauna {
+    background: linear-gradient(135deg, #f97316 0%, #eab308 100%);
+    box-shadow: 0 0 0 1px rgba(217, 119, 6, 0.35);
   }
 
   .wc-today .wc-day-num {
