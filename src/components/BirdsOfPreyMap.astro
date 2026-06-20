@@ -832,20 +832,21 @@
 
   #birds-refresh {
     padding: 0.5rem 1rem;
-    background: var(--color-text);
+    background: var(--color-accent);
     color: var(--color-bg);
-    border: 1px solid var(--color-text);
+    border: 1px solid var(--color-accent);
     border-radius: 0;
     font-size: 0.75rem;
     font-family: var(--font-sans);
     letter-spacing: 0.08em;
     text-transform: uppercase;
     cursor: pointer;
-    transition: opacity 0.15s;
+    transition: background-color 0.15s, border-color 0.15s;
   }
 
   #birds-refresh:hover {
-    opacity: 0.75;
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
   }
 
   .birds-message {
@@ -960,7 +961,7 @@
     width: 100%;
     margin-top: 0.5rem;
     padding: 0.375rem 0.5rem;
-    background: var(--color-text);
+    background: var(--color-accent);
     color: var(--color-bg);
     border: none;
     font-size: 0.75rem;
