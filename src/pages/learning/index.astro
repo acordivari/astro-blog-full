@@ -19,14 +19,16 @@ const featured = {
   source: 'https://github.com/acordivari/speaker_py',
 };
 
+// A second featured card, mirroring the Sound Design Lab hero treatment
+const tatu = {
+  title: 'Tatu Artists Around the World',
+  blurb: 'A directory app built on Rails.',
+  stack: ['Ruby on Rails'],
+  source: 'https://github.com/acordivari/tatu-repo',
+};
+
 // Earlier work, carried over from my former portfolio (andrewdc92.github.io)
 const projects = [
-  {
-    title: 'Global index of tattooists',
-    blurb: 'A directory app built on Rails.',
-    stack: ['Ruby on Rails'],
-    href: 'https://github.com/acordivari/tatu-repo',
-  },
   {
     title: 'Freelance CRM',
     blurb: 'Angular 2 microservice dashboard backed by a Rails API.',
@@ -115,6 +117,22 @@ const squares = nestSquares(18);
           </a>
           <a href={featured.source} target="_blank" rel="noopener noreferrer" class="link-muted">
             Source
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <article class="featured">
+      <div class="featured-body">
+        <span class="badge">Earlier work</span>
+        <h3>{tatu.title}</h3>
+        <p>{tatu.blurb}</p>
+        <ul class="stack">
+          {tatu.stack.map((tech) => <li>{tech}</li>)}
+        </ul>
+        <div class="links">
+          <a href={tatu.source} target="_blank" rel="noopener noreferrer" class="link-primary">
+            Source &rarr;
           </a>
         </div>
       </div>
