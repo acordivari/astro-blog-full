@@ -37,7 +37,7 @@ const navLinks = [
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
     <link href="/pagefind/pagefind-ui.css" rel="stylesheet" />
     <script is:inline src="/pagefind/pagefind-ui.js"></script>
@@ -170,15 +170,30 @@ const navLinks = [
 
     <style is:global>
       :root {
-        --color-bg: #ffffff;
-        --color-text: #0a0a0a;
-        --color-muted: #737373;
-        --color-border: #e0e0e0;
-        --color-nav-bg: #0a0a0a;
-        --color-nav-text: #ffffff;
-        --color-nav-muted: rgba(255, 255, 255, 0.45);
+        /* Base — warm cream rather than stark white (kills the flat look) */
+        --color-bg: #f7f4ec;
+        --color-surface: #fffdf7;          /* lifted card/panel surface */
+        --color-text: #21241d;             /* warm near-black, ~14:1 on bg */
+        --color-muted: #5e6652;            /* sage-gray, AA on cream (~5.3:1) */
+        --color-border: #e3ddcf;           /* warm taupe */
+
+        /* Forest / earth accents (60-30-10) */
+        --color-accent: #2e6f40;           /* forest green — links, highlights (AA ~5.6:1) */
+        --color-accent-hover: #235532;     /* deeper green for hover */
+        --color-accent-warm: #b0500c;      /* burnt orange — sparing earth accent (AA) */
+
+        /* Nav — deep forest charcoal */
+        --color-nav-bg: #20271f;
+        --color-nav-text: #f5f2e9;
+        --color-nav-muted: rgba(245, 242, 233, 0.5);
+
+        /* Elevation — soft, warm-tinted shadows for depth (replaces flat borders) */
+        --shadow-sm: 0 1px 2px rgba(33, 36, 29, 0.04), 0 2px 6px rgba(33, 36, 29, 0.05);
+        --shadow-md: 0 4px 12px rgba(33, 36, 29, 0.06), 0 12px 28px rgba(33, 36, 29, 0.07);
+        --shadow-lg: 0 12px 32px rgba(33, 36, 29, 0.10), 0 32px 64px rgba(33, 36, 29, 0.12);
+
         --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
-        --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+        --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
         --max-width: 1280px;
         --nav-height: 56px;
       }
@@ -196,12 +211,31 @@ const navLinks = [
         line-height: 1.6;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        font-optical-sizing: auto;
+        text-rendering: optimizeLegibility;
       }
 
       body {
         min-height: 100vh;
         display: flex;
         flex-direction: column;
+      }
+
+      /* Subtle film-grain for tactile depth — static SVG noise, no JS/WebGL */
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        opacity: 0.05;
+        mix-blend-mode: multiply;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+
+      ::selection {
+        background: var(--color-accent-warm);
+        color: #fff;
       }
 
       img {
@@ -219,6 +253,7 @@ const navLinks = [
         height: var(--nav-height);
         display: flex;
         align-items: center;
+        box-shadow: var(--shadow-sm);
       }
 
       .nav-inner {
