@@ -22,8 +22,9 @@ const featured = {
 // A second featured card, mirroring the Sound Design Lab hero treatment
 const tatu = {
   title: 'Tatu Artists Around the World',
-  blurb: 'A directory app built on Rails.',
-  stack: ['Ruby on Rails'],
+  blurb:
+    'A searchable encyclopedia of blackwork tattoo artists, rebuilt greenfield from a 2016 Rails 5 monolith into a Rails 8 JSON API and a React 19 SPA. Artists are derived automatically from Instagram captions, their images owned via Active Storage rather than hotlinked, and their locations resolved through a confidence-scored geocoding pipeline (Claude bio-extraction → Google-Places-verified shops → Nominatim) — so the directory can be searched, filtered by country and region, and plotted on an interactive map. Roughly 1,650 artists ingested from the @blackworkers feed and follow-list imports.',
+  stack: ['Rails 8', 'Ruby 3.3', 'PostgreSQL', 'Active Storage', 'React 19', 'TypeScript', 'Vite', 'React Query', 'MapLibre GL', 'Apify'],
   source: 'https://github.com/acordivari/tatu-repo',
 };
 
