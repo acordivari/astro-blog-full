@@ -28,6 +28,15 @@ const tatu = {
   source: 'https://github.com/acordivari/tatu-repo',
 };
 
+// A third featured card, mirroring the hero treatment of the cards above
+const x402 = {
+  title: 'Agent-Initiated Payments with x402',
+  blurb:
+    'A testnet sandbox exploring how autonomous agents can pay for things on a human’s behalf without spending outside their mandate. Built on Coinbase’s x402 protocol: an agent hits an HTTP 402 Payment Required, signs an EIP-3009 USDC authorization, and a facilitator settles the transfer gaslessly on-chain (Base Sepolia). On top of that sits a Human Authorization Mandate (HAM) layer answering the question x402 leaves open — which human authorized this agent to spend, and within what scope — enforcing intent, cart, and payment validation through a guarded order state machine (CREATED → QUOTED → AUTHORIZED → SETTLING → SETTLED) with idempotent settlement retries. First live on-chain settlement landed June 2026.',
+  stack: ['TypeScript', 'x402 v2', 'Coinbase CDP Wallet', 'viem', 'EIP-3009', 'Base Sepolia', 'USDC', 'OIDC', 'Zod'],
+  source: 'https://github.com/acordivari/coinbase-x402-implementation',
+};
+
 // Earlier work, carried over from my former portfolio (andrewdc92.github.io)
 const projects = [
   {
@@ -107,6 +116,22 @@ const squares = nestSquares(18);
     <article class="featured">
       <div class="featured-body">
         <span class="badge">Most recent</span>
+        <h3>{x402.title}</h3>
+        <p>{x402.blurb}</p>
+        <ul class="stack">
+          {x402.stack.map((tech) => <li>{tech}</li>)}
+        </ul>
+        <div class="links">
+          <a href={x402.source} target="_blank" rel="noopener noreferrer" class="link-primary">
+            Source &rarr;
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <article class="featured">
+      <div class="featured-body">
+        <span class="badge">Recent work</span>
         <h3>{featured.title}</h3>
         <p>{featured.blurb}</p>
         <ul class="stack">
