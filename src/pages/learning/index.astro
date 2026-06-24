@@ -9,6 +9,15 @@ const sortedPosts = posts.sort(
 
 const allTags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
 
+// Newest initiative — a vintage tube-amp emulator
+const tube = {
+  title: 'Fender \'67 Tube Amp Emulator',
+  blurb:
+    'A C++ Audio Unit plugin that models a late 60s-era Fender tube amplifier circa 1967 — the clean headroom that breaks up into a warm, slightly overdriven blues tone. The signal chain runs an input drive stage into an 8×-oversampled asymmetric tube clipper (generating even-order harmonics), a 20 Hz DC blocker, and a 3rd-order Bassman tone stack derived from the actual passive Fender circuit via bilinear transform — so the famous midrange scoop falls out of the math rather than being faked. Cabinet loading convolves real speaker impulse responses, dynamic power sag models supply droop on transients, and a built-in test-tone generator lets you audition without a guitar.',
+  stack: ['C++', 'JUCE', 'CMake', 'Audio Unit', 'macOS', 'DSP', 'Convolution'],
+  source: 'https://github.com/acordivari/tube-emulator',
+};
+
 // Featured project — most recent work
 const featured = {
   title: 'Sound Design Lab',
@@ -116,6 +125,22 @@ const squares = nestSquares(18);
     <article class="featured">
       <div class="featured-body">
         <span class="badge">Most recent</span>
+        <h3>{tube.title}</h3>
+        <p>{tube.blurb}</p>
+        <ul class="stack">
+          {tube.stack.map((tech) => <li>{tech}</li>)}
+        </ul>
+        <div class="links">
+          <a href={tube.source} target="_blank" rel="noopener noreferrer" class="link-primary">
+            Source &rarr;
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <article class="featured">
+      <div class="featured-body">
+        <span class="badge">Recent work</span>
         <h3>{x402.title}</h3>
         <p>{x402.blurb}</p>
         <ul class="stack">
