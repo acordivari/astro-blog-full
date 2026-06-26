@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import SocialLinks from '../components/SocialLinks.astro';
 import { getCollection } from 'astro:content';
 
 const reflections = await getCollection('reflections', ({ data }) => !data.draft);
@@ -13,6 +14,8 @@ const latestReflections = reflections
   <section class="hero">
     <p class="hero-eyebrow">Andrew Cordivari</p>
     <h1>Intersections of<br/>life, technology,<br/>nature, and<br/>awareness.</h1>
+    <p class="hero-tagline">Senior Technical Consultant II at Proof (formerly Notarize) — an enterprise support &amp; solutions engineer building open-source tooling for the x401 protocol.</p>
+    <SocialLinks />
   </section>
 
   {latestReflections.length > 0 && (
@@ -63,6 +66,18 @@ const latestReflections = reflections
     letter-spacing: -0.03em;
     line-height: 1.02;
     color: var(--color-text);
+  }
+
+  .hero-tagline {
+    margin-top: 2rem;
+    max-width: 52ch;
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: var(--color-muted);
+  }
+
+  .hero :global(.social-links) {
+    margin-top: 1.75rem;
   }
 
   .section {

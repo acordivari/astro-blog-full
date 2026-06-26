@@ -9,6 +9,15 @@ const sortedPosts = posts.sort(
 
 const allTags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
 
+// Current work — open-source tooling for Proof's x401 protocol
+const x401 = {
+  title: 'x401 — Open-Source Proofs of Concept',
+  blurb:
+    'Open-source proofs-of-concept and sample integration paths for x401, Proof’s new HTTP-native proof-requirement protocol — the 401 analog to x402’s payments. Where x402 settles a payment behind an HTTP 402, x401 gates a route behind a credential proof: a verifier declares what must be proven (personhood, residency, membership, organizational standing, or workload identity) and an agent obtains and presents a verifiable credential to gain access. Built on the W3C Digital Credentials API, OpenID4VP, DCQL, and OAuth 2.0, the sample paths show developers and AI agents how to satisfy a proof requirement end-to-end.',
+  stack: ['x401', 'W3C Digital Credentials API', 'OpenID4VP', 'DCQL', 'OAuth 2.0', 'OpenID4VCI', 'TypeScript'],
+  spec: 'https://x401.proof.com/spec/latest/',
+};
+
 // Newest initiative — a vintage tube-amp emulator
 const tube = {
   title: 'Fender \'67 Tube Amp Emulator',
@@ -125,14 +134,14 @@ const squares = nestSquares(18);
     <article class="featured">
       <div class="featured-body">
         <span class="badge">Most recent</span>
-        <h3>{tube.title}</h3>
-        <p>{tube.blurb}</p>
+        <h3>{x401.title}</h3>
+        <p>{x401.blurb}</p>
         <ul class="stack">
-          {tube.stack.map((tech) => <li>{tech}</li>)}
+          {x401.stack.map((tech) => <li>{tech}</li>)}
         </ul>
         <div class="links">
-          <a href={tube.source} target="_blank" rel="noopener noreferrer" class="link-primary">
-            Source &rarr;
+          <a href={x401.spec} target="_blank" rel="noopener noreferrer" class="link-primary">
+            Read the spec &rarr;
           </a>
         </div>
       </div>
@@ -148,6 +157,22 @@ const squares = nestSquares(18);
         </ul>
         <div class="links">
           <a href={x402.source} target="_blank" rel="noopener noreferrer" class="link-primary">
+            Source &rarr;
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <article class="featured">
+      <div class="featured-body">
+        <span class="badge">Recent work</span>
+        <h3>{tube.title}</h3>
+        <p>{tube.blurb}</p>
+        <ul class="stack">
+          {tube.stack.map((tech) => <li>{tech}</li>)}
+        </ul>
+        <div class="links">
+          <a href={tube.source} target="_blank" rel="noopener noreferrer" class="link-primary">
             Source &rarr;
           </a>
         </div>
