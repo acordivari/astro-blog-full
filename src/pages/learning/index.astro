@@ -384,7 +384,7 @@ const squares = nestSquares(18);
   /* ─── Project grid ─────────────────────────────── */
   .project-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 1px;
     background: var(--color-border);
     border: 1px solid var(--color-border);
@@ -550,6 +550,14 @@ const squares = nestSquares(18);
     color: var(--color-muted);
     padding: 3rem 0;
     font-size: 0.9375rem;
+  }
+
+  /* Collapse the three-up grid to a single column before the cards get cramped.
+     Going straight from 3 → 1 keeps every cell filled (no empty grey cells). */
+  @media (max-width: 768px) {
+    .project-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media (max-width: 600px) {
