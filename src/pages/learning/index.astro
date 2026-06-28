@@ -318,6 +318,8 @@ const squares = nestSquares(18);
     border: 1px solid var(--color-text);
     padding: 2.5rem;
     margin-bottom: 2rem;
+    /* Size the title to this card's width (see .featured h3) */
+    container-type: inline-size;
   }
 
   .badge {
@@ -331,13 +333,16 @@ const squares = nestSquares(18);
     margin-bottom: 1rem;
   }
 
+  /* Scale each title to the card's inline width so the longest one
+     ("x401 + x402 — …") stays on a single line, then keep them all there. */
   .featured h3 {
     font-family: var(--font-display);
-    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    font-size: clamp(1.2rem, 3.3cqi, 2.5rem);
     font-weight: 400;
     letter-spacing: -0.01em;
     line-height: 1.1;
     margin-bottom: 0.875rem;
+    white-space: nowrap;
   }
 
   .featured p {
@@ -557,6 +562,12 @@ const squares = nestSquares(18);
   @media (max-width: 768px) {
     .project-grid {
       grid-template-columns: 1fr;
+    }
+
+    /* Too many characters to keep on one readable line on phones — let it wrap. */
+    .featured h3 {
+      white-space: normal;
+      font-size: clamp(1.5rem, 6vw, 2rem);
     }
   }
 
