@@ -22,7 +22,7 @@ const tube = {
 const featured = {
   title: 'Sound Design Lab',
   blurb:
-    'An interactive educational tool for live sound engineers. Assign real speaker and amplifier components to positions in a Denver venue and get instant validation on impedance matching, power compatibility, and wiring safety — with SPL coverage prediction, audible fault auditioning, and live-graded guided missions.',
+    'A hands-on learning tool for live sound engineers. Place real speakers and amplifiers around a Denver venue and get instant feedback on whether the setup is safe and sound — flagging mismatched power or wiring, predicting how the sound covers the room, and letting you hear what a fault would sound like. Guided missions grade your work as you go.',
   stack: ['FastAPI', 'SQLAlchemy', 'React 18', 'Vite', 'Zustand', 'Tailwind', 'Web Audio API'],
   live: 'https://speakerblast.netlify.app/',
   source: 'https://github.com/acordivari/speaker_py',
@@ -32,7 +32,7 @@ const featured = {
 const tatu = {
   title: 'Tatu Artists Around the World',
   blurb:
-    'A searchable encyclopedia of blackwork tattoo artists, rebuilt greenfield from a 2016 Rails 5 monolith into a Rails 8 JSON API and a React 19 SPA. Artists are derived automatically from Instagram captions, their images owned via Active Storage rather than hotlinked, and their locations resolved through a confidence-scored geocoding pipeline (Claude bio-extraction → Google-Places-verified shops → Nominatim) — so the directory can be searched, filtered by country and region, and plotted on an interactive map. Roughly 1,650 artists ingested from the @blackworkers feed and follow-list imports.',
+    'A searchable directory of blackwork tattoo artists from around the world — rebuilt from the ground up off an old 2016 project. It pulls artists automatically from Instagram, stores their work directly rather than hotlinking it, and figures out where each artist is based by reading their bio and cross-checking real shop locations. You can search, filter by country and region, and see everyone on an interactive map. Around 1,650 artists indexed so far.',
   stack: ['Rails 8', 'Ruby 3.3', 'PostgreSQL', 'Active Storage', 'React 19', 'TypeScript', 'Vite', 'React Query', 'MapLibre GL', 'Apify'],
   live: 'https://tatu-repo1.netlify.app/',
   source: 'https://github.com/acordivari/tatu-repo',
@@ -42,7 +42,7 @@ const tatu = {
 const x402 = {
   title: 'x401 + x402 — Open Source Identity-backed Agentic Payments',
   blurb:
-    'Two complementary open-source protocols for letting autonomous agents act on a human’s behalf — first proving who they are, then paying within their mandate. x401 (Proof’s HTTP-native proof-requirement protocol, the 401 analog to x402’s payments) gates a route behind a credential proof: a verifier declares what must be proven — personhood, residency, membership, organizational standing, or workload identity — and an agent presents a verifiable credential to gain access, built on the W3C Digital Credentials API, OpenID4VP, and OAuth 2.0. x402 then handles the payment: an agent hits an HTTP 402, signs an EIP-3009 USDC authorization, and a facilitator settles gaslessly on-chain (Base Sepolia). On top sits a Human Authorization Mandate (HAM) layer answering the question x402 leaves open — which human authorized this agent to spend, and within what scope — enforcing intent, cart, and payment validation through a guarded order state machine (CREATED → QUOTED → AUTHORIZED → SETTLING → SETTLED) with idempotent settlement retries. First live on-chain settlement landed June 2026.',
+    'Two open-source protocols that let AI agents safely act on a person’s behalf — first proving who they are, then paying within limits that person set. x401 handles the proof: before granting access, a service can require an agent to verify something real about itself (personhood, residency, membership). x402 handles the money: the agent pays with USDC, settled on-chain. A mandate layer ties it together, enforcing which human approved the spend and how much. First live on-chain payment landed June 2026.',
   stack: ['TypeScript', 'x401', 'x402 v2', 'W3C Digital Credentials API', 'OpenID4VP', 'OAuth 2.0', 'Coinbase CDP Wallet', 'viem', 'EIP-3009', 'Base Sepolia', 'USDC', 'Zod'],
   source: 'https://github.com/acordivari/coinbase-x402-implementation',
   spec: 'https://x401.proof.com/spec/latest/',
