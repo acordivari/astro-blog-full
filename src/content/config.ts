@@ -86,10 +86,25 @@ const fabrics = defineCollection({
   }),
 });
 
+// Journal collection - engineering journal entries synced from ~/.claude/journal.
+// Only reviewed, secret-scanned entries are published here (read-only).
+const journal = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+    project: z.string(),
+    date: z.coerce.date(),
+    type: z.enum(['change', 'learning', 'plan', 'note']).default('note'),
+    tags: z.array(z.string()).default([]),
+    draft: z.boolean().default(false),
+  }),
+});
+
 export const collections = {
   reviews,
   reflections,
   movement,
   learning,
   fabrics,
+  journal,
 };
