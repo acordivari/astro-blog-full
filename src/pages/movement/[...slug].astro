@@ -16,9 +16,11 @@ const { Content } = await post.render();
 ---
 
 <BaseLayout
-  title={`${post.data.title} - Blog26`}
+  title={`${post.data.title} — Movement`}
   description={post.data.description}
   image={post.data.image}
+  type="article"
+  publishDate={post.data.publishDate}
 >
   <article class="movement-post" data-pagefind-body data-pagefind-meta={`tags:${post.data.tags.join(', ')}`}>
     <div class="article-header">

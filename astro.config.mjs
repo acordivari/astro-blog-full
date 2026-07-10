@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
+import sitemap from '@astrojs/sitemap';
 import { loadEnv } from 'vite';
 
 const env = loadEnv(process.env.NODE_ENV || 'development', process.cwd(), '');
@@ -8,7 +9,12 @@ const allowedHosts = tailscaleHost ? [tailscaleHost] : undefined;
 
 export default defineConfig({
   site: 'https://thisisandrew.me',
-  integrations: [mdx()],
+  integrations: [
+    mdx(),
+    sitemap({
+      filter: (page) => !page.includes('/open-graph/'),
+    }),
+  ],
   server: {
     host: true,
   },

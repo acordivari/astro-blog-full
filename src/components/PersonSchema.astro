@@ -1,0 +1,19 @@
+---
+// JSON-LD identity block for the home and about pages, so search engines
+// can connect "Andrew Cordivari" queries to this site and its profiles.
+const person = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Andrew Cordivari',
+  url: 'https://thisisandrew.me/',
+  email: 'mailto:andrew@thisisandrew.me',
+  jobTitle: 'Senior Technical Consultant II',
+  worksFor: { '@type': 'Organization', name: 'Proof' },
+  sameAs: [
+    'https://www.linkedin.com/in/andrewcordivari',
+    'https://github.com/acordivari',
+  ],
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(person)} />

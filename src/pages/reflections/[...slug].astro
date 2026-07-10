@@ -15,9 +15,11 @@ const { Content } = await post.render();
 ---
 
 <BaseLayout
-  title={`${post.data.title} - Blog26`}
+  title={`${post.data.title} — Reflections`}
   description={post.data.description}
   image={post.data.image}
+  type="article"
+  publishDate={post.data.publishDate}
 >
   <article class="reflection" data-pagefind-body>
     <div class="article-header">

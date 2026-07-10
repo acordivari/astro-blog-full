@@ -18,6 +18,8 @@ const { Content } = await entry.render();
 <BaseLayout
   title={`${entry.data.title} — Fabrics`}
   description={entry.data.description}
+  type="article"
+  publishDate={entry.data.publishDate}
 >
   <article class="fabric-article" data-pagefind-ignore>
     <div class="article-header">

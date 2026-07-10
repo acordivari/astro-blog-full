@@ -19,9 +19,11 @@ const brandSlug = post.data.brand ? getBrandSlug(post.data.brand) : undefined;
 ---
 
 <BaseLayout
-  title={`${post.data.title} - Blog26`}
+  title={`${post.data.title} — Reviews`}
   description={post.data.description}
   image={post.data.image}
+  type="article"
+  publishDate={post.data.publishDate}
 >
   <article class="review" data-pagefind-body data-pagefind-meta={`tags:${post.data.tags.join(', ')}${post.data.brand ? `, brand:${post.data.brand}` : ''}`}>
     <div class="article-header">

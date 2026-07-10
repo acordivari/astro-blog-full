@@ -26,7 +26,7 @@ const allReviews = await getCollection('reviews', ({ data }) => !data.draft);
 const allTags = [...new Set(allReviews.flatMap((post) => post.data.tags))].sort();
 ---
 
-<BaseLayout title={`${tag} - Reviews - Blog26`} description={`Reviews tagged with ${tag}`}>
+<BaseLayout title={`${tag} — Reviews`} description={`Reviews tagged with ${tag}`} image="/open-graph/reviews.png">
   <h1>Tag: {tag}</h1>
   <p class="intro">{posts.length} review{posts.length !== 1 ? 's' : ''} tagged with "{tag}"</p>
 

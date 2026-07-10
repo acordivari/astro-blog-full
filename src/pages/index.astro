@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SocialLinks from '../components/SocialLinks.astro';
+import PersonSchema from '../components/PersonSchema.astro';
 import { getCollection } from 'astro:content';
 
 const reflections = await getCollection('reflections', ({ data }) => !data.draft);
@@ -10,7 +11,11 @@ const latestReflections = reflections
   .slice(0, 3);
 ---
 
-<BaseLayout title="Andrew Cordivari">
+<BaseLayout
+  title="Andrew Cordivari"
+  description="The personal site of Andrew Cordivari — engineering journal, projects, essays, birds of prey, movement, and music."
+>
+  <PersonSchema />
   <section class="hero">
     <p class="hero-eyebrow">Andrew Cordivari</p>
     <h1>Intersections of<br/>life, technology,<br/>nature, and<br/>awareness.</h1>
