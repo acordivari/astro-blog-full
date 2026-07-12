@@ -13,7 +13,7 @@ const allTags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
 const tube = {
   title: 'Fender \'67 Tube Amp Emulator',
   blurb:
-    'A C++ Audio Unit plugin that models a late 60s-era Fender tube amplifier circa 1967 — I'm trying to make a DAW plugin (currently testing this in Garage Band) that sounds better than the stock plug ins. ‘Better’ meaning, it hits that ‘if you know you know’ midrange that a good bluesy solo conveys so well through the right instruments.  The sound parameters are calculated mathematically based on some of the original formulas published in the 60s, 70s, and 80s.',
+    'A C++ Audio Unit plugin that models a late 60s-era Fender tube amplifier circa 1967 — I am trying to make a DAW plugin (currently testing this in Garage Band) that sounds better than the stock plug ins. ‘Better’ meaning, it hits that ‘if you know you know’ midrange that a good bluesy solo conveys so well through the right instruments.  The sound parameters are calculated mathematically based on some of the original formulas published in the 60s, 70s, and 80s.',
   stack: ['C++', 'JUCE', 'CMake', 'Audio Unit', 'macOS', 'DSP', 'Convolution'],
   source: 'https://github.com/acordivari/tube-emulator',
 };
