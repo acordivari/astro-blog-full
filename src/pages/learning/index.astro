@@ -13,7 +13,7 @@ const allTags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
 const tube = {
   title: 'Fender \'67 Tube Amp Emulator',
   blurb:
-    'A C++ Audio Unit plugin that models a late 60s-era Fender tube amplifier circa 1967 — the clean headroom that breaks up into a warm, slightly overdriven blues tone. The signal chain runs an input drive stage into an 8×-oversampled asymmetric tube clipper (generating even-order harmonics), a 20 Hz DC blocker, and a 3rd-order Bassman tone stack derived from the actual passive Fender circuit via bilinear transform — so the famous midrange scoop falls out of the math rather than being faked. Cabinet loading convolves real speaker impulse responses, dynamic power sag models supply droop on transients, and a built-in test-tone generator lets you audition without a guitar.',
+    'A C++ Audio Unit plugin that models a late 60s-era Fender tube amplifier circa 1967 — I'm trying to make a DAW plugin (currently testing this in Garage Band) that sounds better than the stock plug ins. ‘Better’ meaning, it hits that ‘if you know you know’ midrange that a good bluesy solo conveys so well through the right instruments.  The sound parameters are calculated mathematically based on some of the original formulas published in the 60s, 70s, and 80s.',
   stack: ['C++', 'JUCE', 'CMake', 'Audio Unit', 'macOS', 'DSP', 'Convolution'],
   source: 'https://github.com/acordivari/tube-emulator',
 };
