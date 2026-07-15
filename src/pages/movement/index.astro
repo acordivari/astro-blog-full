@@ -28,32 +28,28 @@ const allTags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
   )}
 
   <section class="posts">
-    {sortedPosts.length > 0 ? (
-      sortedPosts.map((post) => (
-        <article class="post-row">
-          <a href={`/movement/${post.slug}`}>
-            <div class="post-body">
-              <h2>{post.data.title}</h2>
-              <p>{post.data.description}</p>
-              {post.data.tags.length > 0 && (
-                <ul class="tags">
-                  {post.data.tags.map((tag: string) => <li>{tag}</li>)}
-                </ul>
-              )}
-            </div>
-            <time datetime={post.data.publishDate.toISOString()}>
-              {post.data.publishDate.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-              })}
-            </time>
-          </a>
-        </article>
-      ))
-    ) : (
-      <p class="empty">No posts yet.</p>
-    )}
+    {sortedPosts.map((post) => (
+      <article class="post-row">
+        <a href={`/movement/${post.slug}`}>
+          <div class="post-body">
+            <h2>{post.data.title}</h2>
+            <p>{post.data.description}</p>
+            {post.data.tags.length > 0 && (
+              <ul class="tags">
+                {post.data.tags.map((tag: string) => <li>{tag}</li>)}
+              </ul>
+            )}
+          </div>
+          <time datetime={post.data.publishDate.toISOString()}>
+            {post.data.publishDate.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            })}
+          </time>
+        </a>
+      </article>
+    ))}
   </section>
 </BaseLayout>
 
@@ -156,12 +152,6 @@ const allTags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
     white-space: nowrap;
     flex-shrink: 0;
     padding-top: 0.125rem;
-  }
-
-  .empty {
-    color: var(--color-muted);
-    padding: 3rem 0;
-    font-size: 0.9375rem;
   }
 
   @media (max-width: 600px) {
