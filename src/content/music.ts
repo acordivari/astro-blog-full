@@ -13,7 +13,7 @@ export interface Playlist {
 export const playlists: Playlist[] = [
   {
     name: "Sets",
-    description: "Running list of burner techno, bounce, downtempo, uptempo, psytrance, psytechno. Heavily inspired by labels like Akumandra, Souq Records, Alt Orient, KataHaifisch, and Tipping Point. Also includes some favorites from Boom Fest 2023 and 2025. This set by Nixe from last summer has managed to stick in my rotation for many months now and is one of the most incredible demonstrations of weaving different textures, tempos, and time signatures together for a truly amazing journey.",
+    description: "Running list of burner techno, bounce, downtempo, uptempo, psytrance, psytechno. Heavily inspired by labels like Akumandra, Souq Records, Alt Orient, KataHaifisch, and Tipping Point. Also includes some favorites from Boom Festival 2023 and 2025. This set by Nixe from last summer has managed to stick in my rotation for many months now and is an incredible demonstrations of weaving different textures, tempos, and time signatures together for a truly amazing journey.",
     embedUrl: "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A432070671&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true",
     addedDate: "2026-01-22",
   },
