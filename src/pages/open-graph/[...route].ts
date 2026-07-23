@@ -30,9 +30,9 @@ const pages: Record<string, CardData> = {
   music: { title: 'Music', description: 'Recent listens, mixes, and sounds · thisisandrew.me' },
 };
 
-// journal and reflections exclude drafts from their detail routes; the other
-// sections render every entry. Mirror that so every page has a card.
-const draftFiltered = new Set(['journal', 'reflections']);
+// journal, reflections, and reviews exclude drafts from their detail routes;
+// the other sections render every entry. Mirror that so every page has a card.
+const draftFiltered = new Set(['journal', 'reflections', 'reviews']);
 
 for (const [name, label] of Object.entries(sections)) {
   pages[name] = { title: label, description: 'thisisandrew.me' };

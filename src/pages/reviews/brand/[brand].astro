@@ -7,17 +7,19 @@ import { brands, brandSlugs, getBrandName, type BrandSlug } from '../../../conte
 export async function getStaticPaths() {
   const reviews = await getCollection('reviews', ({ data }) => !data.draft);
 
-  return brandSlugs.map((slug) => {
-    const brandName = getBrandName(slug);
-    return {
-      params: { brand: slug },
-      props: {
-        slug,
-        brandName,
-        posts: reviews.filter((post) => post.data.brand === brandName),
-      },
-    };
-  });
+  return brandSlugs
+    .map((slug) => {
+      const brandName = getBrandName(slug);
+      return {
+        params: { brand: slug },
+        props: {
+          slug,
+          brandName,
+          posts: reviews.filter((post) => post.data.brand === brandName),
+        },
+      };
+    })
+    .filter(({ props }) => props.posts.length > 0);
 }
 
 const { slug, brandName, posts } = Astro.props;
