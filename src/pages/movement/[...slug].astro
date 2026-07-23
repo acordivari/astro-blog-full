@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import TagList from '../../components/TagList.astro';
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -32,7 +31,11 @@ const { Content } = await post.render();
           day: 'numeric',
         })}
       </time>
-      {post.data.tags.length > 0 && <TagList tags={post.data.tags} basePath="/movement/tag" />}
+      {post.data.tags.length > 0 && (
+        <ul class="tags">
+          {post.data.tags.map((tag: string) => <li>{tag}</li>)}
+        </ul>
+      )}
     </div>
 
     {post.data.image && (
@@ -79,6 +82,23 @@ const { Content } = await post.render();
     color: var(--color-muted);
     letter-spacing: 0.04em;
     margin-bottom: 1rem;
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    list-style: none;
+    padding: 0;
+  }
+
+  .tags li {
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    border: 1px solid var(--color-border);
+    padding: 0.2rem 0.5rem;
   }
 
   .featured-image {
