@@ -1,12 +1,12 @@
 ---
-title: "Entry One: Why am I building a blog in 2026?"
+title: "Why am I building a blog in 2026?"
 description: "Sharing myself with the world, v6"
 publishDate: 2026-01-22
 tags: ["skills", "education"]
 draft: false
 ---
 
-I've created a few different variations of a personal blog before, many different flavors. Myspace, Tumblr, then Github pages, then Hugo.js, and some back and forth with Wordpress over the years. I have newfound motivation to update [my Hugo.js site](https://thisisandrew.me/#) as 1) it is nicely designed to serve as a portfolio site of sorts, 2) it's always humbling to re-read my tone of voice from an age where my prefrontal cortex was still developing, and 3) it appears that I hardcoded a former partner's name into the source code. Guess that means you can stay tuned for a future post on dusting off this [repo](https://github.com/andrewdc92/personal-site-v3). 
+I've created a few different variations of a personal blog before, many different flavors. Myspace, Tumblr, then Github pages, then Hugo.js, and some back and forth with Wordpress over the years. I have newfound motivation to update [my Hugo.js site](https://thisisandrew.me/#) as 1) it is nicely designed to serve as a portfolio site of sorts, 2) it's always humbling to re-read my tone of voice from an age where my prefrontal cortex was still developing, and 3) it appears that I hardcoded a former partner's name into the source code. Guess that means you can stay tuned for a future post on dusting off this [repo](https://github.com/andrewdc92/personal-site-v3). Edit: I scrapped the site entirely and repurposed the domain for this project.
 
 My earlier forays into blogging served more elementary purposes—the fulfillment of seeing thoughtfulness rendering in the browser. My canvas of sorts. Coloring inside the lines was never my strong suit. I was reflecting recently that amidst the enshittification of social media, there's been some hesitancy and incongruence when it comes to answering the question of 'what do I want to share with the world via the internet?' This is a commitment to learn/fail/grow in some public fashion. And for what it's worth, there's not much skin in the game when I'm currently writing drafts with no traffic. The exponential growth of AI infrastructure and tooling has created a clamor for perceived originality, and I've observed discourse around the 'eat or be eaten' perspectives around jobs and our humanity in general. Publishing learnings on the web is far from new, I cringe seeing takes that compare public learning discourse to some inherent wisdom. I was fortunate to work directly with entrepreneurs for the earlier parts of my professional career and [Ryan](https://www.ryanckulp.com/) was a particularly dedicated example of someone who documented his learnings and endeavors in real time. Skin in the game is probably still one of his favorite expressions. 
 
