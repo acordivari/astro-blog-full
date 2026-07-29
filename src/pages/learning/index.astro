@@ -46,6 +46,14 @@ const x402 = {
   spec: 'https://x401.proof.com/spec/latest/',
 };
 
+// Hero card — probing what Project CETI's WhAM model learned about whale codas
+const ling = {
+  title: 'Ling — Reading a Whale-Song Model',
+  blurb:
+ 'Project CETI has trained a neural network on the patterned clicks sperm whales use to address one another — a machine that has read a great deal of whale data and can imitate it convincingly. These clicks can register over 230 decibels- for comparison, measuring the loudness of a fighter jet at takeoff usually peaks around 150db. There's a few great documentarys on Youtube if you are curious to learn more. This project probes the model to explore if has it learned the grammar, or only the accent? The method is comparative — compare whale codas beside human click languages, drum rhythms, and other  animal sounds, then note which resemblances hold and which the model has invented. This a browser tool that runs entirely on a local machine, no weights and no network, measuring rhythm and timbre in the open beside a glossary of 75 terms each defined twice, once formally and once for the uninitiated. I do have the weights downloaded on my computer for other testing purposes and these are available from Hugging Face. Controls and predictions are written down before every run, on the sound suspicion that any ordering of distances can be rationalised after the fact — and null results are recorded as results.',  stack: ['Vanilla JS', 'Web Audio API', 'DSP', 'DTW', 'Python 3.9', 'VampNet', 'madmom', 'ffmpeg'],
+  source: 'https://github.com/acordivari/ling',
+};
+
 // Earlier work, carried over from my former portfolio (andrewdc92.github.io)
 const projects = [
   {
@@ -112,6 +120,22 @@ const squares = nestSquares(18);
           </a>
           <a href={x402.spec} target="_blank" rel="noopener noreferrer" class="link-muted">
             Read the x401 spec
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <article class="featured">
+      <div class="featured-body">
+        <span class="badge">Recent work</span>
+        <h3>{ling.title}</h3>
+        <p>{ling.blurb}</p>
+        <ul class="stack">
+          {ling.stack.map((tech) => <li>{tech}</li>)}
+        </ul>
+        <div class="links">
+          <a href={ling.source} target="_blank" rel="noopener noreferrer" class="link-primary">
+            Source &rarr;
           </a>
         </div>
       </div>
