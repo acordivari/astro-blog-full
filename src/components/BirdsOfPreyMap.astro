@@ -1076,9 +1076,12 @@
     const inLo = Math.round(lo / 2.54);
     const inHi = Math.round(hi / 2.54);
 
+    // Reference points sit close together at the low end of the axis (40 and
+    // 95 cm of 310), so on a narrow modal their labels would collide. Alternate
+    // them between two heights — neighbours then never share a row.
     const refs = WINGSPAN_REFERENCES.map(
-      (r) => `
-      <div class="wingspan-ref" style="left:${(r.cm / max) * 100}%">
+      (r, i) => `
+      <div class="wingspan-ref${i % 2 === 1 ? ' wingspan-ref--raised' : ''}" style="left:${(r.cm / max) * 100}%">
         <span class="wingspan-ref-tick"></span>
         <span class="wingspan-ref-label">${r.label}<br>${r.cm} cm</span>
       </div>`
@@ -1887,7 +1890,8 @@
     position: relative;
     height: 10px;
     background: var(--color-surface-2);
-    margin: 2.75rem 0 0.5rem;
+    /* Top margin clears two staggered rows of reference labels */
+    margin: 6.25rem 0 0.5rem;
   }
 
   .wingspan-range {
@@ -1918,11 +1922,35 @@
   .wingspan-ref-label {
     position: absolute;
     bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    /* A fixed, wrapping width — nowrap was what let long labels such as
+       "Adult human, arms out" run into their neighbours on narrow screens. */
+    width: 4.75rem;
+    white-space: normal;
     font-size: 0.625rem;
     line-height: 1.25;
     color: var(--color-muted);
     text-align: center;
-    white-space: nowrap;
+  }
+
+  /* Offset enough that a three-line lower label (the longest reference wraps
+     to three lines on very narrow screens) still clears the raised row. */
+  .wingspan-ref--raised .wingspan-ref-label {
+    bottom: 58px;
+  }
+
+  /* A hairline joins a raised label back to its tick so the pairing stays
+     unambiguous once the rows are offset. */
+  .wingspan-ref--raised .wingspan-ref-label::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    width: 1px;
+    height: 38px;
+    background: var(--color-muted);
+    opacity: 0.3;
   }
 
   /* Seasonality bar strip */
