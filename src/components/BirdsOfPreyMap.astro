@@ -1411,9 +1411,13 @@
     color: var(--color-error);
   }
 
+  /* Framed so the light panel reads as a deliberate lit instrument inset into
+     the dark page, rather than an untreated bright slab. */
   #birds-map {
     height: 600px;
     border: 1px solid var(--color-border);
+    border-radius: 10px;
+    box-shadow: var(--shadow-md);
     overflow: hidden;
   }
 
@@ -1605,38 +1609,32 @@
     box-shadow: var(--shadow-md);
   }
 
-  /* Leaflet ships light-mode chrome of its own — popups, zoom buttons and the
-     attribution strip all default to white. Drive them from the tokens so the
-     map furniture matches the ground in either theme. */
+  /* The map keeps its own light world — see the --map-* tokens in BaseLayout.
+     Leaflet's chrome follows the basemap, not the page, so popups and controls
+     stay legible against the tiles instead of matching the dark ground. */
   .leaflet-container {
-    background: var(--color-surface);
+    background: var(--map-panel);
   }
 
   .leaflet-popup-content-wrapper,
   .leaflet-popup-tip {
-    background: var(--color-surface);
-    color: var(--color-text);
-    border: 1px solid var(--color-border);
+    background: var(--map-panel);
+    color: var(--map-panel-text);
+    border: 1px solid var(--map-panel-border);
   }
 
-  .leaflet-popup-close-button {
-    color: var(--color-muted) !important;
+  .leaflet-popup-content {
+    color: var(--map-panel-text);
   }
 
   .leaflet-bar a {
-    background: var(--color-surface);
-    color: var(--color-text);
-    border-bottom-color: var(--color-border);
-  }
-
-  .leaflet-bar a:hover {
-    background: var(--color-surface-2);
-    color: var(--color-text);
+    background: var(--map-panel);
+    color: var(--map-panel-text);
+    border-bottom-color: var(--map-panel-border);
   }
 
   .leaflet-control-attribution {
-    background: var(--color-surface) !important;
-    color: var(--color-muted);
+    color: var(--map-panel-text);
   }
 
   .leaflet-control-attribution a {

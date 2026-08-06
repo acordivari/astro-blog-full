@@ -323,14 +323,27 @@ const section = sectionRoutes.find(([path]) => currentPath.startsWith(path))?.[1
         --freq-occasional: #ffc163;
         --freq-rare: #ff8a70;
 
-        --map-tiles: dark;
-        --map-center: #ffa92e;
-        --map-radius: #4fd6c4;
-        --map-marker-stroke: #0d1418;
-        --map-hawk: #ff7a6b;
-        --map-falcon: #ffc163;
-        --map-owl: #6fb3ff;
-        --map-other: #94a9b2;
+        /* The map stays LIGHT in both themes, on purpose. A dark basemap looked
+           handsome but erased the terrain, national forests, roads and most
+           labels — and reading raptor density against the Front Range is the
+           entire point of the map. It reads as a lit instrument panel inset
+           into the dark page. Flip --map-tiles to `dark` to go back.
+           These are intentionally NOT redefined in the cream theme: the map is
+           the same light world either way. */
+        --map-tiles: light;
+        --map-center: #0a0a0a;
+        --map-radius: #737373;
+        --map-marker-stroke: #ffffff;
+        --map-hawk: #ef4444;
+        --map-falcon: #f97316;
+        --map-owl: #3b82f6;
+        --map-other: #6b7280;
+
+        /* Leaflet's own chrome — popups, zoom buttons, attribution — belongs to
+           the map's light world, not the page's dark one. */
+        --map-panel: #ffffff;
+        --map-panel-text: #21241d;
+        --map-panel-border: #d8d2c4;
 
         /* Nav — translucent over the ground, not a solid brand slab */
         --color-nav-bg: rgba(17, 26, 31, 0.72);
@@ -422,14 +435,8 @@ const section = sectionRoutes.find(([path]) => currentPath.startsWith(path))?.[1
         --freq-occasional: #a16207;
         --freq-rare: #9a3412;
 
-        --map-tiles: light;
-        --map-center: #0a0a0a;
-        --map-radius: #737373;
-        --map-marker-stroke: #ffffff;
-        --map-hawk: #ef4444;
-        --map-falcon: #f97316;
-        --map-owl: #3b82f6;
-        --map-other: #6b7280;
+        /* Map tokens are deliberately not overridden here — the map is the
+           same light world in both themes. See :root. */
 
         --color-nav-bg: var(--color-accent);
         --color-nav-text: #f5f2e9;
