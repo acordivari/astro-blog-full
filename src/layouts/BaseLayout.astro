@@ -350,6 +350,10 @@ const section = sectionRoutes.find(([path]) => currentPath.startsWith(path))?.[1
         --color-nav-text: #e8eff1;
         --color-nav-muted: #94a9b2;
         --nav-blur: blur(14px);
+        /* The mobile pop-out hangs below the header, outside the box that
+           backdrop-filter applies to — so it would be 72% opacity with nothing
+           blurring behind it. It gets its own opaque surface instead. */
+        --color-nav-panel: #18242b;
 
         /* Film grain: multiply vanishes on a dark ground — screen lifts it */
         --grain-blend: screen;
@@ -442,6 +446,8 @@ const section = sectionRoutes.find(([path]) => currentPath.startsWith(path))?.[1
         --color-nav-text: #f5f2e9;
         --color-nav-muted: rgba(245, 242, 233, 0.8);
         --nav-blur: none;
+        /* Cream's bar was already opaque green; the pop-out matches it. */
+        --color-nav-panel: var(--color-accent);
 
         --grain-blend: multiply;
         --grain-opacity: 0.05;
@@ -892,9 +898,12 @@ const section = sectionRoutes.find(([path]) => currentPath.startsWith(path))?.[1
           top: 100%;
           left: 0;
           right: 0;
-          background: var(--color-nav-bg);
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+          /* Fully opaque: this panel is outside the header's backdrop-filter
+             box, so translucency here means unblurred page content showing
+             straight through the menu. */
+          background: var(--color-nav-panel);
+          border-top: 1px solid var(--color-border);
+          box-shadow: var(--shadow-lg);
         }
 
         .primary-nav.open {
@@ -908,9 +917,17 @@ const section = sectionRoutes.find(([path]) => currentPath.startsWith(path))?.[1
         .nav-link {
           height: auto;
           line-height: 1;
-          padding: 1rem 1.5rem;
+          padding: 1rem 1.5rem 1rem 2.25rem;
           font-size: 0.8125rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+          border-bottom: 1px solid var(--color-border);
+        }
+
+        .nav-link::before {
+          left: 1.5rem;
+        }
+
+        .primary-nav li:last-child .nav-link {
+          border-bottom: 0;
         }
 
         .search-btn {
