@@ -18,7 +18,7 @@ const latestReflections = reflections
   <PersonSchema />
   <section class="hero">
     <p class="hero-eyebrow">Andrew Cordivari</p>
-    <h1>Intersections of<br/>life, technology,<br/>nature, and<br/>awareness.</h1>
+    <h1>Intersections of<br/>life, technology,<br/><span class="grad">nature</span>, and<br/>awareness.</h1>
     <SocialLinks />
   </section>
 
@@ -72,6 +72,27 @@ const latestReflections = reflections
     letter-spacing: -0.04em;
     line-height: 1.02;
     color: var(--color-text);
+  }
+
+  /* Amber → rufous → kingfisher, the same ramp the palette is built on.
+     Falls back to a solid accent where background-clip: text is unsupported,
+     since transparent text would otherwise render as nothing. */
+  h1 .grad {
+    color: var(--color-accent);
+  }
+
+  @supports (background-clip: text) or (-webkit-background-clip: text) {
+    h1 .grad {
+      background: linear-gradient(
+        100deg,
+        var(--color-accent),
+        var(--color-accent-warm) 55%,
+        var(--sec-learning)
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
   }
 
   .hero :global(.social-links) {
