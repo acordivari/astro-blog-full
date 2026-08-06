@@ -40,17 +40,35 @@ const articleSchema =
       }
     : undefined;
 
+// Each top-level section owns a hue. The dot beside every nav link carries its
+// section's colour at all times; the active one is lit and haloed, so the whole
+// map stays visible and you can always see where you are on it.
 const navLinks = [
-  { href: '/about', label: 'About' },
-  { href: '/learning', label: 'Learning & Projects' },
-  { href: '/birds', label: 'Birds' },
-  { href: '/movement', label: 'Movement' },
-  { href: '/music', label: 'Music' },
+  { href: '/about', label: 'About', hue: 'home' },
+  { href: '/learning', label: 'Learning & Projects', hue: 'learning' },
+  { href: '/birds', label: 'Birds', hue: 'birds' },
+  { href: '/movement', label: 'Movement', hue: 'movement' },
+  { href: '/music', label: 'Music', hue: 'music' },
 ];
+
+// Route → section hue. Derived here rather than passed as a prop from every
+// page, so new routes inherit the right colour by living under the right path.
+// Collections that are all "writing" deliberately share one hue.
+const sectionRoutes: [string, string][] = [
+  ['/learning', 'learning'],
+  ['/journal', 'learning'],
+  ['/birds', 'birds'],
+  ['/movement', 'movement'],
+  ['/music', 'music'],
+  ['/reflections', 'writing'],
+  ['/reviews', 'writing'],
+  ['/fabrics', 'writing'],
+];
+const section = sectionRoutes.find(([path]) => currentPath.startsWith(path))?.[1] ?? 'home';
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-section={section}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -88,7 +106,7 @@ const navLinks = [
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
     <link href="/pagefind/pagefind-ui.css" rel="stylesheet" />
     <script is:inline src="/pagefind/pagefind-ui.js"></script>
@@ -100,10 +118,11 @@ const navLinks = [
 
         <nav id="primary-nav" class="primary-nav" aria-label="Primary navigation">
           <ul>
-            {navLinks.map(({ href, label }) => (
+            {navLinks.map(({ href, label, hue }) => (
               <li>
                 <a
                   href={href}
+                  style={`--dot: var(--sec-${hue});`}
                   class:list={['nav-link', { active: currentPath.startsWith(href) }]}
                 >
                   {label}
@@ -220,33 +239,216 @@ const navLinks = [
     </footer>
 
     <style is:global>
+      /* ─────────────────────────────────────────────────────────────
+         NIGHTJAR — one dark ground, five shifting hues.
+
+         Two layers: everything structural is GLOBAL and never moves;
+         only the accent layer (--sec) changes per route. The ground,
+         the type and the amber are constant on every page.
+
+         TO RESTORE THE ORIGINAL CREAM DESIGN: add data-theme="cream"
+         to the <html> tag above. Every colour here is token-driven, so
+         the whole site follows. The untouched original is also kept on
+         the `design/cream-snapshot` branch.
+         ───────────────────────────────────────────────────────────── */
       :root {
-        /* Base — warm cream rather than stark white (kills the flat look) */
+        /* Ground — deep slate, blue-biased rather than neutral black */
+        --color-bg: #111a1f;
+        --color-surface: #18242b;          /* lifted card/panel surface */
+        --color-surface-2: #1f2e37;        /* second elevation step */
+        --color-text: #e8eff1;             /* ~14:1 on ground */
+        --color-muted: #94a9b2;            /* AA on ground (~7.3:1) */
+        --color-faint: #6b8290;            /* metadata, timestamps */
+        --color-border: #25353d;
+        --color-border-strong: #33474f;
+
+        /* Amber is the global brand constant — wordmark, labels, focus rings.
+           It is deliberately NOT one of the section hues. (9.21:1 on ground) */
+        --color-accent: #ffa92e;
+        --color-accent-hover: #ffc163;
+        --color-accent-warm: #ff5c39;      /* rufous — sparing */
+
+        /* Section hues. Each is ≥41° from its neighbours and ≥35° clear of
+           the amber, so nothing reads as the brand colour by accident.
+           All clear 4.5:1 on --color-bg (AA for normal text, not just large). */
+        --sec-home: var(--color-accent);   /* 9.21:1 */
+        --sec-learning: #4fd6c4;           /* 9.86:1 — kingfisher */
+        --sec-birds: #ff6e6e;              /* 6.47:1 */
+        --sec-movement: #b4d63c;           /* 10.60:1 */
+        --sec-music: #c08bff;              /* 7.03:1 */
+        --sec-writing: #62a8ff;            /* 7.19:1 — reflections, reviews, fabrics */
+
+        /* Ambient glow per section. Kept as explicit rgba rather than
+           color-mix() so it degrades safely on older Safari. */
+        --sec-glow-home: rgba(255, 169, 46, 0.13);
+        --sec-glow-learning: rgba(79, 214, 196, 0.13);
+        --sec-glow-birds: rgba(255, 110, 110, 0.13);
+        --sec-glow-movement: rgba(180, 214, 60, 0.13);
+        --sec-glow-music: rgba(192, 139, 255, 0.13);
+        --sec-glow-writing: rgba(98, 168, 255, 0.13);
+
+        /* Map palette. BirdsOfPreyMap reads these from JS via getComputedStyle
+           so the Leaflet layers follow the theme instead of hardcoding it.
+           The three order colours are a categorical data scale — deliberately
+           independent of the brand accent. */
+        /* Text that sits ON an accent fill. The dark theme's accents are
+           bright, so this must be dark — white would be unreadable. */
+        --color-on-accent: #111a1f;
+
+        /* Workout calendar. Sessions take the Movement hue; sauna gets its own
+           heat colour so the two states stay distinguishable. */
+        --wc-workout: #b4d63c;
+        --wc-workout-bg: rgba(180, 214, 60, 0.10);
+        --wc-workout-bg-hover: rgba(180, 214, 60, 0.18);
+        --wc-workout-border: rgba(180, 214, 60, 0.32);
+        --wc-sauna: #ff8a3d;
+        --wc-sauna-bg: rgba(255, 138, 61, 0.14);
+        --wc-sauna-border: rgba(255, 138, 61, 0.45);
+        --mark-bg: rgba(255, 169, 46, 0.28);
+
+        /* Journal entry types and review star ratings — categorical, so they
+           stay distinct from both the accent and the section hue. */
+        --type-change: #6ee7a8;
+        --type-learning: #c08bff;
+        --type-plan: #ffc163;
+        --color-star: #ffc163;
+
+        /* Semantic status + the species-frequency ramp on /birds. Both are
+           independent of the brand accent — meaning, not decoration. */
+        --color-error: #ff8a80;
+        --color-error-border: #7d3b34;
+        --color-ok: #4fd6c4;
+        --freq-common: #6ee7a8;
+        --freq-regular: #b4d63c;
+        --freq-occasional: #ffc163;
+        --freq-rare: #ff8a70;
+
+        --map-tiles: dark;
+        --map-center: #ffa92e;
+        --map-radius: #4fd6c4;
+        --map-marker-stroke: #0d1418;
+        --map-hawk: #ff7a6b;
+        --map-falcon: #ffc163;
+        --map-owl: #6fb3ff;
+        --map-other: #94a9b2;
+
+        /* Nav — translucent over the ground, not a solid brand slab */
+        --color-nav-bg: rgba(17, 26, 31, 0.72);
+        --color-nav-text: #e8eff1;
+        --color-nav-muted: #94a9b2;
+        --nav-blur: blur(14px);
+
+        /* Film grain: multiply vanishes on a dark ground — screen lifts it */
+        --grain-blend: screen;
+        --grain-opacity: 0.035;
+
+        /* Elevation — deeper and darker than the cream set needed */
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30), 0 2px 6px rgba(0, 0, 0, 0.24);
+        --shadow-md: 0 4px 14px -8px rgba(0, 0, 0, 0.60), 0 20px 48px -26px var(--sec-shadow, rgba(0, 0, 0, 0.5));
+        --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45), 0 32px 64px rgba(0, 0, 0, 0.40);
+
+        --font-body: 'Newsreader', Georgia, 'Times New Roman', serif;
+        --font-display: 'Bricolage Grotesque', system-ui, -apple-system, sans-serif;
+        --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+        --max-width: 1280px;
+        --nav-height: 56px;
+
+        color-scheme: dark;
+      }
+
+      /* Resolve the active section into --sec. One attribute on <html>
+         drives the rail, the eyebrows, the links and the ambient glow. */
+      [data-section='home']     { --sec: var(--sec-home);     --sec-glow: var(--sec-glow-home); }
+      [data-section='learning'] { --sec: var(--sec-learning); --sec-glow: var(--sec-glow-learning); }
+      [data-section='birds']    { --sec: var(--sec-birds);    --sec-glow: var(--sec-glow-birds); }
+      [data-section='movement'] { --sec: var(--sec-movement); --sec-glow: var(--sec-glow-movement); }
+      [data-section='music']    { --sec: var(--sec-music);    --sec-glow: var(--sec-glow-music); }
+      [data-section='writing']  { --sec: var(--sec-writing);  --sec-glow: var(--sec-glow-writing); }
+
+      /* ─────────────────────────────────────────────────────────────
+         CREAM — the original design, preserved. Opt in with
+         <html data-theme="cream">. Section hues are re-tuned for the
+         light ground (the dark set is far too bright on cream).
+         ───────────────────────────────────────────────────────────── */
+      :root[data-theme='cream'] {
         --color-bg: #f7f4ec;
-        --color-surface: #fffdf7;          /* lifted card/panel surface */
-        --color-text: #21241d;             /* warm near-black, ~14:1 on bg */
-        --color-muted: #5e6652;            /* sage-gray, AA on cream (~5.3:1) */
-        --color-border: #e3ddcf;           /* warm taupe */
+        --color-surface: #fffdf7;
+        --color-surface-2: #f2eee2;
+        --color-text: #21241d;
+        --color-muted: #5e6652;
+        --color-faint: #7c8471;
+        --color-border: #e3ddcf;
+        --color-border-strong: #cfc7b4;
 
-        /* Forest / earth accents (60-30-10) */
-        --color-accent: #337c47;           /* forest green — links, highlights (AA ~4.6:1 on cream) */
-        --color-accent-hover: #275e38;     /* deeper green for hover */
-        --color-accent-warm: #b0500c;      /* burnt orange — sparing earth accent (AA) */
+        --color-accent: #337c47;
+        --color-accent-hover: #275e38;
+        --color-accent-warm: #b0500c;
 
-        /* Nav — forest green (primary brand surface) */
+        --sec-home: var(--color-accent);
+        --sec-learning: #0d8f84;
+        --sec-birds: #c2410c;
+        --sec-movement: #5f9a0b;
+        --sec-music: #9333ea;
+        --sec-writing: #2563eb;
+
+        --sec-glow-home: rgba(51, 124, 71, 0.07);
+        --sec-glow-learning: rgba(13, 143, 132, 0.07);
+        --sec-glow-birds: rgba(194, 65, 12, 0.07);
+        --sec-glow-movement: rgba(95, 154, 11, 0.07);
+        --sec-glow-music: rgba(147, 51, 234, 0.07);
+        --sec-glow-writing: rgba(37, 99, 235, 0.07);
+
+        --color-on-accent: #f5f2e9;
+
+        --wc-workout: #f97316;
+        --wc-workout-bg: #fff7ed;
+        --wc-workout-bg-hover: #ffedd5;
+        --wc-workout-border: #fed7aa;
+        --wc-sauna: #d97706;
+        --wc-sauna-bg: #fed7aa;
+        --wc-sauna-border: #f59e0b;
+        --mark-bg: #fef08a;
+
+        --type-change: #2d6a4f;
+        --type-learning: #6a4c93;
+        --type-plan: #9c6644;
+        --color-star: #f59e0b;
+
+        --color-error: #b91c1c;
+        --color-error-border: #fca5a5;
+        --color-ok: #059669;
+        --freq-common: #15803d;
+        --freq-regular: #4d7c0f;
+        --freq-occasional: #a16207;
+        --freq-rare: #9a3412;
+
+        --map-tiles: light;
+        --map-center: #0a0a0a;
+        --map-radius: #737373;
+        --map-marker-stroke: #ffffff;
+        --map-hawk: #ef4444;
+        --map-falcon: #f97316;
+        --map-owl: #3b82f6;
+        --map-other: #6b7280;
+
         --color-nav-bg: var(--color-accent);
         --color-nav-text: #f5f2e9;
         --color-nav-muted: rgba(245, 242, 233, 0.8);
+        --nav-blur: none;
 
-        /* Elevation — soft, warm-tinted shadows for depth (replaces flat borders) */
+        --grain-blend: multiply;
+        --grain-opacity: 0.05;
+
         --shadow-sm: 0 1px 2px rgba(33, 36, 29, 0.04), 0 2px 6px rgba(33, 36, 29, 0.05);
         --shadow-md: 0 4px 12px rgba(33, 36, 29, 0.06), 0 12px 28px rgba(33, 36, 29, 0.07);
         --shadow-lg: 0 12px 32px rgba(33, 36, 29, 0.10), 0 32px 64px rgba(33, 36, 29, 0.12);
 
-        --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+        /* Restoring cream also means swapping the font <link> in <head> back to
+           Fraunces + Inter — those families are no longer requested. */
+        --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
         --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
-        --max-width: 1280px;
-        --nav-height: 56px;
+
+        color-scheme: light;
       }
 
       *, *::before, *::after {
@@ -256,7 +458,7 @@ const navLinks = [
       }
 
       html {
-        font-family: var(--font-sans);
+        font-family: var(--font-body);
         background: var(--color-bg);
         color: var(--color-text);
         line-height: 1.6;
@@ -272,15 +474,52 @@ const navLinks = [
         flex-direction: column;
       }
 
-      /* Subtle film-grain for tactile depth — static SVG noise, no JS/WebGL */
+      /* Two light sources. The warm one is fixed and is always "you"; the
+         coloured one takes the section hue and tells you where you are.
+         Both are position:fixed so they can never widen the page. */
+      html::before,
+      body::after {
+        content: '';
+        position: fixed;
+        z-index: 0;
+        pointer-events: none;
+        border-radius: 50%;
+      }
+
+      html::before {
+        top: -20vh;
+        left: -12vw;
+        width: 48vw;
+        height: 62vh;
+        background: radial-gradient(circle, rgba(255, 169, 46, 0.13), transparent 70%);
+      }
+
+      body::after {
+        top: -12vh;
+        right: -14vw;
+        width: 46vw;
+        height: 60vh;
+        background: radial-gradient(circle, var(--sec-glow, transparent), transparent 70%);
+      }
+
+      /* Content sits above the glows */
+      .site-header,
+      main,
+      footer {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Subtle film-grain for tactile depth — static SVG noise, no JS/WebGL.
+         `multiply` is invisible on a dark ground, so the blend is tokenised. */
       body::before {
         content: '';
         position: fixed;
         inset: 0;
-        z-index: 1;
+        z-index: 2;
         pointer-events: none;
-        opacity: 0.05;
-        mix-blend-mode: multiply;
+        opacity: var(--grain-opacity);
+        mix-blend-mode: var(--grain-blend);
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
       }
 
@@ -298,6 +537,12 @@ const navLinks = [
       /* ─── Header / Nav ─────────────────────────────── */
       .site-header {
         background: var(--color-nav-bg);
+        -webkit-backdrop-filter: var(--nav-blur);
+        backdrop-filter: var(--nav-blur);
+        /* own compositing layer — stops the blur flickering over the
+           fixed glows while scrolling */
+        transform: translateZ(0);
+        border-bottom: 1px solid var(--color-border);
         position: sticky;
         top: 0;
         z-index: 100;
@@ -318,10 +563,11 @@ const navLinks = [
       }
 
       .wordmark {
+        font-family: var(--font-display);
         color: var(--color-nav-text);
         text-decoration: none;
         font-size: 0.8125rem;
-        font-weight: 500;
+        font-weight: 600;
         letter-spacing: 0.06em;
         text-transform: uppercase;
         white-space: nowrap;
@@ -336,17 +582,44 @@ const navLinks = [
 
       .nav-link {
         display: block;
-        padding: 0 0.875rem;
+        position: relative;
+        padding: 0 0.875rem 0 1.5rem;
         height: var(--nav-height);
         line-height: var(--nav-height);
         color: var(--color-nav-muted);
+        font-family: var(--font-display);
         text-decoration: none;
         font-size: 0.6875rem;
-        font-weight: 400;
+        font-weight: 500;
         letter-spacing: 0.1em;
         text-transform: uppercase;
         transition: color 0.15s;
         white-space: nowrap;
+      }
+
+      /* Every section's dot is always present; the active one is lit and
+         haloed, so the whole map stays visible. */
+      .nav-link::before {
+        content: '';
+        position: absolute;
+        left: 0.625rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 6px;
+        height: 6px;
+        border-radius: 2px;
+        background: var(--dot, var(--color-nav-muted));
+        opacity: 0.5;
+        transition: opacity 0.15s, box-shadow 0.15s;
+      }
+
+      .nav-link:hover::before {
+        opacity: 0.8;
+      }
+
+      .nav-link.active::before {
+        opacity: 1;
+        box-shadow: 0 0 9px var(--dot, transparent);
       }
 
       .nav-link:hover,
@@ -394,14 +667,52 @@ const navLinks = [
         flex: 1;
         max-width: var(--max-width);
         margin: 0 auto;
+        /* The rail is the strongest location signal on the page — it is the
+           only structural element that takes the section hue. */
+        border-left: 3px solid var(--sec, var(--color-accent));
         padding: 0 2rem 5rem;
         width: 100%;
       }
 
       h1 {
         font-family: var(--font-display);
-        font-weight: 300;
-        letter-spacing: -0.02em;
+        font-weight: 700;
+        font-variation-settings: 'opsz' 96;
+        letter-spacing: -0.035em;
+      }
+
+      /* Form controls default to the browser's own chrome, which reads as a
+         washed grey slab on this ground. Low-specificity element selectors, so
+         any component that styles its own inputs still wins. */
+      input,
+      select,
+      textarea {
+        background: var(--color-surface);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+        font-family: inherit;
+      }
+
+      input::placeholder,
+      textarea::placeholder {
+        color: var(--color-faint);
+        opacity: 1;
+      }
+
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible,
+      button:focus-visible,
+      a:focus-visible {
+        outline: 2px solid var(--sec, var(--color-accent));
+        outline-offset: 2px;
+      }
+
+      /* Range sliders and checkboxes take the section hue */
+      input[type='range'],
+      input[type='checkbox'],
+      input[type='radio'] {
+        accent-color: var(--sec, var(--color-accent));
       }
 
       /* ─── Footer ───────────────────────────────────── */
@@ -419,15 +730,18 @@ const navLinks = [
       }
 
       .footer-wordmark {
+        font-family: var(--font-display);
         font-size: 0.6875rem;
+        font-weight: 500;
         letter-spacing: 0.1em;
         text-transform: uppercase;
         color: var(--color-muted);
       }
 
       .footer-copy {
+        font-family: var(--font-mono);
         font-size: 0.75rem;
-        color: var(--color-border);
+        color: var(--color-faint);
       }
 
       /* ─── Search Modal ─────────────────────────────── */
@@ -448,19 +762,23 @@ const navLinks = [
       .search-backdrop {
         position: absolute;
         inset: 0;
-        background: rgba(10, 10, 10, 0.7);
+        background: rgba(5, 9, 12, 0.78);
+        -webkit-backdrop-filter: blur(3px);
+        backdrop-filter: blur(3px);
       }
 
       .search-panel {
         position: relative;
-        background: var(--color-bg);
+        background: var(--color-surface);
+        border: 1px solid var(--color-border-strong);
+        border-radius: 12px;
         width: 100%;
         max-width: 580px;
         max-height: 72vh;
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        box-shadow: 0 32px 64px rgba(0, 0, 0, 0.24);
+        box-shadow: var(--shadow-lg);
       }
 
       .search-panel-header {
@@ -493,15 +811,46 @@ const navLinks = [
         color: var(--color-text);
       }
 
+      /* Pagefind ships its own light-mode defaults; drive them from our tokens
+         rather than fighting the bundled stylesheet rule by rule. */
       #search-container {
         padding: 1rem;
         overflow-y: auto;
+
+        --pagefind-ui-primary: var(--sec, var(--color-accent));
+        --pagefind-ui-text: var(--color-text);
+        --pagefind-ui-background: var(--color-surface);
+        --pagefind-ui-border: var(--color-border-strong);
+        --pagefind-ui-tag: var(--color-surface-2);
+        --pagefind-ui-border-width: 1px;
+        --pagefind-ui-border-radius: 6px;
+        --pagefind-ui-font: var(--font-body);
       }
 
       .pagefind-ui__search-input {
-        border-radius: 0 !important;
         font-size: 1rem !important;
-        border: 1px solid var(--color-border) !important;
+        background: var(--color-bg) !important;
+        color: var(--color-text) !important;
+      }
+
+      .pagefind-ui__search-clear {
+        background: transparent !important;
+        color: var(--color-muted) !important;
+      }
+
+      .pagefind-ui__result-title a {
+        font-family: var(--font-display);
+        color: var(--color-text) !important;
+      }
+
+      .pagefind-ui__result-excerpt {
+        color: var(--color-muted) !important;
+      }
+
+      .pagefind-ui__result-excerpt mark {
+        background: transparent;
+        color: var(--sec, var(--color-accent));
+        font-weight: 600;
       }
 
       .pagefind-ui__results-area {

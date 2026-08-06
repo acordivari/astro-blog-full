@@ -254,8 +254,8 @@ const squares = nestSquares(18);
 
   h1 {
     font-size: clamp(2.5rem, 6vw, 4.5rem);
-    font-weight: 400;
-    letter-spacing: -0.02em;
+    font-weight: 700;
+    letter-spacing: -0.035em;
     line-height: 1.05;
     margin-bottom: 1rem;
   }
@@ -294,8 +294,10 @@ const squares = nestSquares(18);
     will-change: transform;
   }
 
+  /* .dark/.light name the alternation, not the value — the fills follow the
+     theme, and the filled ring takes the section hue. */
   .spiral :global(.sq.dark) {
-    background: var(--color-text);
+    background: var(--sec, var(--color-text));
     animation: mandala 13s linear infinite;
   }
 
@@ -330,8 +332,14 @@ const squares = nestSquares(18);
   }
 
   /* ─── Featured project ─────────────────────────── */
+  /* Lifted onto the surface with a section-hue edge and a tinted shadow —
+     this is where --shadow-md finally earns its keep. */
   .featured {
-    border: 1px solid var(--color-text);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--sec, var(--color-accent));
+    border-radius: 10px;
+    box-shadow: var(--shadow-md);
     padding: 2.5rem;
     margin-bottom: 2rem;
     /* Size the title to this card's width (see .featured h3) */
@@ -340,11 +348,14 @@ const squares = nestSquares(18);
 
   .badge {
     display: inline-block;
+    font-family: var(--font-mono);
     font-size: 0.625rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-nav-text);
-    background: var(--color-nav-bg);
+    color: var(--sec, var(--color-accent));
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
     padding: 0.25rem 0.5rem;
     margin-bottom: 1rem;
   }
@@ -411,17 +422,20 @@ const squares = nestSquares(18);
     border: 1px solid var(--color-border);
   }
 
+  /* Cells sit on the surface; the 1px grid gaps above show through as rules. */
   .project-card {
     display: block;
-    background: var(--color-bg);
+    background: var(--color-surface);
     padding: 1.75rem;
     text-decoration: none;
     color: inherit;
-    transition: background 0.15s;
+    box-shadow: inset 0 0 0 0 var(--sec, var(--color-accent));
+    transition: background 0.15s, box-shadow 0.15s;
   }
 
   .project-card:hover {
-    background: #f2eee3;
+    background: var(--color-surface-2);
+    box-shadow: inset 3px 0 0 0 var(--sec, var(--color-accent));
   }
 
   .project-card h3 {
@@ -452,11 +466,14 @@ const squares = nestSquares(18);
   }
 
   .stack li {
+    font-family: var(--font-mono);
     font-size: 0.625rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--color-muted);
+    background: var(--color-surface-2);
     border: 1px solid var(--color-border);
+    border-radius: 4px;
     padding: 0.2rem 0.5rem;
   }
 

@@ -125,6 +125,11 @@
   const DEFAULT_PLACE = 'Boulder, CO';
   const MILES_TO_KM = 1.60934;
 
+  // Leaflet paints to canvas/SVG, so it cannot read CSS variables itself.
+  // Pull the map palette off :root once so the layers follow the active theme.
+  const mapToken = (name: string, fallback: string) =>
+    getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+
   // Mutable search state — driven by the address box and radius slider
   let currentLat = DEFAULT_LAT;
   let currentLng = DEFAULT_LNG;
@@ -272,9 +277,22 @@
     // Initialize map centered on the default location
     map = L.map('birds-map').setView([currentLat, currentLng], 8);
 
-    // Add OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
+
+    // Basemap follows the theme — standard OSM tiles glare badly against the
+    // dark ground, so the dark theme uses CARTO's dark raster (no API key).
+    const tiles =
+      mapToken('--map-tiles', 'dark') === 'light'
+        ? {
+            url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            attribution: '&copy; OpenStreetMap contributors',
+          }
+        : {
+            url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+          };
+
+    L.tileLayer(tiles.url, {
+      attribution: tiles.attribution,
       maxZoom: 18,
     }).addTo(map);
 
@@ -295,8 +313,8 @@
 
     centerMarker = L.circleMarker([currentLat, currentLng], {
       radius: 7,
-      fillColor: '#0a0a0a',
-      color: '#0a0a0a',
+      fillColor: mapToken('--map-center', '#0a0a0a'),
+      color: mapToken('--map-center', '#0a0a0a'),
       weight: 2,
       opacity: 1,
       fillOpacity: 0.9,
@@ -306,8 +324,8 @@
 
     radiusCircle = L.circle([currentLat, currentLng], {
       radius: currentRadiusMiles * MILES_TO_KM * 1000,
-      color: '#737373',
-      fillColor: '#737373',
+      color: mapToken('--map-radius', '#737373'),
+      fillColor: mapToken('--map-radius', '#737373'),
       fillOpacity: 0.04,
       weight: 1,
       dashArray: '4, 6',
@@ -632,7 +650,7 @@
       const marker = L.circleMarker([occ.decimalLatitude, occ.decimalLongitude], {
         radius: 6,
         fillColor: getColorForOrder(occ.order),
-        color: '#fff',
+        color: mapToken('--map-marker-stroke', '#fff'),
         weight: 1,
         opacity: 1,
         fillOpacity: 0.8,
@@ -719,9 +737,9 @@
         (${top[1].count} ${top[1].count === 1 ? 'report' : 'reports'}).${rareSentence}
       </p>
       <div class="birds-insights-breakdown">
-        <span><span class="dot-inline" style="background:#ef4444"></span> ${orders.Accipitriformes} hawk &amp; eagle ${orders.Accipitriformes === 1 ? 'species' : 'species'}</span>
-        <span><span class="dot-inline" style="background:#f97316"></span> ${orders.Falconiformes} falcon ${orders.Falconiformes === 1 ? 'species' : 'species'}</span>
-        <span><span class="dot-inline" style="background:#3b82f6"></span> ${orders.Strigiformes} owl ${orders.Strigiformes === 1 ? 'species' : 'species'}</span>
+        <span><span class="dot-inline" style="background:${getColorForOrder('Accipitriformes')}"></span> ${orders.Accipitriformes} hawk &amp; eagle ${orders.Accipitriformes === 1 ? 'species' : 'species'}</span>
+        <span><span class="dot-inline" style="background:${getColorForOrder('Falconiformes')}"></span> ${orders.Falconiformes} falcon ${orders.Falconiformes === 1 ? 'species' : 'species'}</span>
+        <span><span class="dot-inline" style="background:${getColorForOrder('Strigiformes')}"></span> ${orders.Strigiformes} owl ${orders.Strigiformes === 1 ? 'species' : 'species'}</span>
       </div>
     `;
   }
@@ -729,13 +747,13 @@
   function getColorForOrder(order: string): string {
     switch (order) {
       case 'Accipitriformes':
-        return '#ef4444'; // Red - Hawks, Eagles
+        return mapToken('--map-hawk', '#ef4444'); // Hawks, Eagles
       case 'Falconiformes':
-        return '#f97316'; // Orange - Falcons
+        return mapToken('--map-falcon', '#f97316'); // Falcons
       case 'Strigiformes':
-        return '#3b82f6'; // Blue - Owls
+        return mapToken('--map-owl', '#3b82f6'); // Owls
       default:
-        return '#6b7280'; // Gray
+        return mapToken('--map-other', '#6b7280');
     }
   }
 
@@ -1162,7 +1180,7 @@
   .birds-header h2 {
     font-family: var(--font-display);
     font-size: 1.75rem;
-    font-weight: 300;
+    font-weight: 600;
     letter-spacing: -0.01em;
     margin-bottom: 0.25rem;
   }
@@ -1185,8 +1203,8 @@
     border: 1px solid var(--color-border);
     border-radius: 0;
     font-size: 0.875rem;
-    font-family: var(--font-sans);
-    background: var(--color-bg);
+    font-family: var(--font-body);
+    background: var(--color-surface);
     color: var(--color-text);
     cursor: pointer;
     min-width: 200px;
@@ -1200,12 +1218,12 @@
 
   #birds-refresh {
     padding: 0.5rem 1rem;
-    background: var(--color-accent);
+    background: var(--sec, var(--color-accent));
     color: var(--color-bg);
-    border: 1px solid var(--color-accent);
+    border: 1px solid var(--sec, var(--color-accent));
     border-radius: 0;
     font-size: 0.75rem;
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     letter-spacing: 0.08em;
     text-transform: uppercase;
     cursor: pointer;
@@ -1213,8 +1231,8 @@
   }
 
   #birds-refresh:hover {
-    background: var(--color-accent-hover);
-    border-color: var(--color-accent-hover);
+    background: var(--sec, var(--color-accent-hover));
+    border-color: var(--sec, var(--color-accent-hover));
   }
 
   /* Address search */
@@ -1231,8 +1249,8 @@
     border: 1px solid var(--color-border);
     border-radius: 0;
     font-size: 0.875rem;
-    font-family: var(--font-sans);
-    background: var(--color-bg);
+    font-family: var(--font-body);
+    background: var(--color-surface);
     color: var(--color-text);
   }
 
@@ -1243,12 +1261,12 @@
 
   #birds-search-btn {
     padding: 0.5rem 1.25rem;
-    background: var(--color-accent);
+    background: var(--sec, var(--color-accent));
     color: var(--color-bg);
-    border: 1px solid var(--color-accent);
+    border: 1px solid var(--sec, var(--color-accent));
     border-radius: 0;
     font-size: 0.75rem;
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     letter-spacing: 0.08em;
     text-transform: uppercase;
     cursor: pointer;
@@ -1256,8 +1274,8 @@
   }
 
   #birds-search-btn:hover {
-    background: var(--color-accent-hover);
-    border-color: var(--color-accent-hover);
+    background: var(--sec, var(--color-accent-hover));
+    border-color: var(--sec, var(--color-accent-hover));
   }
 
   #birds-search-btn:disabled {
@@ -1287,7 +1305,7 @@
   #birds-radius-slider {
     width: 100%;
     max-width: 340px;
-    accent-color: var(--color-accent);
+    accent-color: var(--sec, var(--color-accent));
     cursor: pointer;
   }
 
@@ -1306,7 +1324,7 @@
   }
 
   .birds-place-error {
-    color: #b91c1c;
+    color: var(--color-error);
   }
 
   /* Area insights panel */
@@ -1314,7 +1332,7 @@
     margin-top: 1.25rem;
     padding: 1.25rem 1.5rem;
     border: 1px solid var(--color-border);
-    background: #fafafa;
+    background: var(--color-surface);
   }
 
   .birds-insights-grid {
@@ -1333,7 +1351,7 @@
   .insight-num {
     font-family: var(--font-display);
     font-size: 2rem;
-    font-weight: 300;
+    font-weight: 600;
     color: var(--color-text);
   }
 
@@ -1389,8 +1407,8 @@
   }
 
   .birds-error {
-    border-color: #fca5a5;
-    color: #b91c1c;
+    border-color: var(--color-error-border);
+    color: var(--color-error);
   }
 
   #birds-map {
@@ -1409,13 +1427,13 @@
   .birds-species-section h3 {
     font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 300;
+    font-weight: 600;
     letter-spacing: -0.01em;
     margin-bottom: 0.25rem;
   }
 
   .birds-species-section h3 span {
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     font-weight: 400;
     color: var(--color-muted);
     font-size: 0.875rem;
@@ -1442,13 +1460,13 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.875rem 1rem;
-    background: var(--color-bg);
+    background: var(--color-surface);
     cursor: pointer;
     transition: background 0.15s;
   }
 
   .species-card:hover {
-    background: #f7f7f7;
+    background: var(--color-surface-2);
   }
 
   .species-card-color {
@@ -1512,10 +1530,10 @@
     white-space: nowrap;
   }
 
-  .species-freq.freq-common { color: #15803d; }
-  .species-freq.freq-regular { color: #4d7c0f; }
-  .species-freq.freq-occasional { color: #a16207; }
-  .species-freq.freq-rare { color: #9a3412; }
+  .species-freq.freq-common { color: var(--freq-common); }
+  .species-freq.freq-regular { color: var(--freq-regular); }
+  .species-freq.freq-occasional { color: var(--freq-occasional); }
+  .species-freq.freq-rare { color: var(--freq-rare); }
 
   /* Popup button */
   .popup-species-btn {
@@ -1523,11 +1541,11 @@
     width: 100%;
     margin-top: 0.5rem;
     padding: 0.375rem 0.5rem;
-    background: var(--color-accent);
+    background: var(--sec, var(--color-accent));
     color: var(--color-bg);
     border: none;
     font-size: 0.75rem;
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     cursor: pointer;
@@ -1559,7 +1577,7 @@
   }
 
   .cache-status.fresh {
-    color: #059669;
+    color: var(--color-ok);
   }
 
   .birds-attribution {
@@ -1584,11 +1602,49 @@
   /* Leaflet popup styling */
   .leaflet-popup-content-wrapper {
     border-radius: 0;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Leaflet ships light-mode chrome of its own — popups, zoom buttons and the
+     attribution strip all default to white. Drive them from the tokens so the
+     map furniture matches the ground in either theme. */
+  .leaflet-container {
+    background: var(--color-surface);
+  }
+
+  .leaflet-popup-content-wrapper,
+  .leaflet-popup-tip {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+  }
+
+  .leaflet-popup-close-button {
+    color: var(--color-muted) !important;
+  }
+
+  .leaflet-bar a {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border-bottom-color: var(--color-border);
+  }
+
+  .leaflet-bar a:hover {
+    background: var(--color-surface-2);
+    color: var(--color-text);
+  }
+
+  .leaflet-control-attribution {
+    background: var(--color-surface) !important;
+    color: var(--color-muted);
+  }
+
+  .leaflet-control-attribution a {
+    color: var(--color-muted);
   }
 
   .leaflet-popup-content {
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     font-size: 0.875rem;
     line-height: 1.5;
   }
@@ -1612,18 +1668,18 @@
   .species-modal-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(10, 10, 10, 0.7);
+    background: rgba(5, 9, 12, 0.78);
   }
 
   .species-modal-content {
     position: relative;
-    background: white;
+    background: var(--color-surface);
     border-radius: 0;
     width: 100%;
     max-width: 1100px;
     max-height: 92vh;
     overflow-y: auto;
-    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--shadow-lg);
     animation: modalIn 0.2s ease-out;
   }
 
@@ -1637,7 +1693,7 @@
     top: 1rem;
     right: 1rem;
     z-index: 10;
-    background: rgba(255,255,255,0.9);
+    background: var(--color-surface);
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
@@ -1670,7 +1726,7 @@
   .species-modal-gallery {
     width: 100%;
     aspect-ratio: 3 / 2;
-    background: #0a0a0a;
+    background: var(--color-surface);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -1690,7 +1746,7 @@
     display: flex;
     gap: 2px;
     padding: 2px;
-    background: #0a0a0a;
+    background: var(--color-surface);
     overflow-x: auto;
   }
 
@@ -1716,7 +1772,7 @@
   #species-modal-name {
     font-family: var(--font-display);
     font-size: 2.25rem;
-    font-weight: 300;
+    font-weight: 600;
     letter-spacing: -0.01em;
     margin-bottom: 0.25rem;
     font-style: italic;
@@ -1819,7 +1875,7 @@
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background: var(--color-accent);
+    background: var(--sec, var(--color-accent));
   }
 
   .fieldnotes-behavior {
@@ -1832,7 +1888,7 @@
   .wingspan-track {
     position: relative;
     height: 10px;
-    background: #ececec;
+    background: var(--color-surface-2);
     margin: 2.75rem 0 0.5rem;
   }
 
@@ -1840,7 +1896,7 @@
     position: absolute;
     top: 0;
     height: 100%;
-    background: var(--color-accent);
+    background: var(--sec, var(--color-accent));
     min-width: 2px;
   }
 
@@ -1891,7 +1947,7 @@
 
   .season-bar {
     width: 100%;
-    background: var(--color-accent);
+    background: var(--sec, var(--color-accent));
     min-height: 1px;
     transition: height 0.2s;
   }

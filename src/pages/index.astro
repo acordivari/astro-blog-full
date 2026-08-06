@@ -57,17 +57,19 @@ const latestReflections = reflections
   }
 
   .hero-eyebrow {
+    font-family: var(--font-display);
     font-size: 0.6875rem;
+    font-weight: 600;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--color-muted);
+    color: var(--sec, var(--color-accent));
     margin-bottom: 1.5rem;
   }
 
   h1 {
     font-size: clamp(3rem, 8vw, 6rem);
-    font-weight: 300;
-    letter-spacing: -0.03em;
+    font-weight: 700;
+    letter-spacing: -0.04em;
     line-height: 1.02;
     color: var(--color-text);
   }
@@ -89,14 +91,18 @@ const latestReflections = reflections
     margin-bottom: 2rem;
   }
 
+  /* Section labels take the amber — the global constant, not the route hue */
   .section-label {
+    font-family: var(--font-display);
     font-size: 0.6875rem;
+    font-weight: 600;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--color-muted);
+    color: var(--color-accent);
   }
 
   .section-all {
+    font-family: var(--font-display);
     font-size: 0.75rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -140,9 +146,10 @@ const latestReflections = reflections
   }
 
   .reflection-row h3 {
+    font-family: var(--font-display);
     font-size: 1rem;
-    font-weight: 500;
-    letter-spacing: -0.005em;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     grid-column: 1;
     grid-row: 1;
   }
@@ -155,8 +162,9 @@ const latestReflections = reflections
   }
 
   .reflection-row time {
+    font-family: var(--font-mono);
     font-size: 0.75rem;
-    color: var(--color-muted);
+    color: var(--color-faint);
     grid-column: 2;
     grid-row: 1;
     white-space: nowrap;

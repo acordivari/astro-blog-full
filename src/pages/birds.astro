@@ -107,7 +107,7 @@ import BirdsOfPreyMap from '../components/BirdsOfPreyMap.astro';
   .about-data h2 {
     font-family: var(--font-display);
     font-size: 1.75rem;
-    font-weight: 300;
+    font-weight: 600;
     letter-spacing: -0.01em;
     margin-bottom: 0.75rem;
   }
@@ -174,9 +174,9 @@ import BirdsOfPreyMap from '../components/BirdsOfPreyMap.astro';
     flex-shrink: 0;
   }
 
-  .dot.red   { background: #ef4444; }
-  .dot.orange { background: #f97316; }
-  .dot.blue  { background: #3b82f6; }
+  .dot.red   { background: var(--map-hawk); }
+  .dot.orange { background: var(--map-falcon); }
+  .dot.blue  { background: var(--map-owl); }
 
   @media (max-width: 640px) {
     .page-content {

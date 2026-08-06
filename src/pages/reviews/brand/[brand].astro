@@ -198,7 +198,7 @@ const topTags = Object.entries(tagCounts)
   .brand-header {
     margin-bottom: 2rem;
     padding-bottom: 1.5rem;
-    border-bottom: 1px solid #e3ddcf;
+    border-bottom: 1px solid var(--color-border);
   }
 
   .brand-header h1 {
@@ -229,7 +229,7 @@ const topTags = Object.entries(tagCounts)
   }
 
   .stars {
-    color: #f59e0b;
+    color: var(--color-star);
   }
 
   .top-tags {
@@ -240,23 +240,23 @@ const topTags = Object.entries(tagCounts)
 
   .top-tag {
     padding: 0.25rem 0.75rem;
-    background: #ece6d8;
+    background: var(--color-surface-2);
     border-radius: 9999px;
     font-size: 0.75rem;
-    color: #6b7280;
+    color: var(--color-muted);
     text-decoration: none;
     transition: background 0.2s;
   }
 
   .top-tag:hover {
-    background: #e3ddcf;
+    background: var(--color-border);
   }
 
   /* All Brands Navigation */
   .all-brands {
     margin-bottom: 2rem;
     padding-bottom: 1.5rem;
-    border-bottom: 1px solid #e3ddcf;
+    border-bottom: 1px solid var(--color-border);
   }
 
   .all-brands h2 {
@@ -273,7 +273,7 @@ const topTags = Object.entries(tagCounts)
   }
 
   .fabric-section {
-    border-bottom: 1px solid #e3ddcf;
+    border-bottom: 1px solid var(--color-border);
     padding-bottom: 2rem;
   }
 
@@ -298,7 +298,7 @@ const topTags = Object.entries(tagCounts)
   }
 
   .card {
-    border: 1px solid #e3ddcf;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     overflow: hidden;
     transition: box-shadow 0.2s, transform 0.2s;
@@ -318,7 +318,7 @@ const topTags = Object.entries(tagCounts)
   .card-image {
     aspect-ratio: 4 / 3;
     overflow: hidden;
-    background: #ece6d8;
+    background: var(--color-surface-2);
   }
 
   .card-image img {
@@ -331,13 +331,13 @@ const topTags = Object.entries(tagCounts)
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+    background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-2) 100%);
   }
 
   .card-image-placeholder span {
     font-size: 3rem;
     font-weight: 700;
-    color: #fbf8ef;
+    color: var(--color-surface);
     opacity: 0.5;
   }
 
@@ -398,7 +398,7 @@ const topTags = Object.entries(tagCounts)
     color: var(--color-muted);
     padding: 2rem;
     text-align: center;
-    background: #fbf8ef;
+    background: var(--color-surface);
     border-radius: 8px;
   }
 

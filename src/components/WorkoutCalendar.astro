@@ -561,17 +561,17 @@
   #wc-search-input {
     width: 100%;
     padding: 0.75rem 2.5rem 0.75rem 2.5rem;
-    border: 1px solid #e3ddcf;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     font-size: 0.9375rem;
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     transition: border-color 0.2s, box-shadow 0.2s;
   }
 
   #wc-search-input:focus {
     outline: none;
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    box-shadow: 0 0 0 3px var(--wc-workout-bg-hover);
   }
 
   #wc-search-input::placeholder {
@@ -594,7 +594,7 @@
   }
 
   .wc-search-clear:hover {
-    background: #ece6d8;
+    background: var(--color-surface-2);
     color: var(--color-text);
   }
 
@@ -608,7 +608,7 @@
     align-items: center;
     margin-bottom: 1rem;
     padding-bottom: 0.75rem;
-    border-bottom: 1px solid #e3ddcf;
+    border-bottom: 1px solid var(--color-border);
   }
 
   #wc-search-count {
@@ -618,7 +618,7 @@
 
   .wc-search-back {
     background: none;
-    border: 1px solid #e3ddcf;
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     padding: 0.4rem 0.75rem;
     font-size: 0.875rem;
@@ -628,12 +628,12 @@
   }
 
   .wc-search-back:hover {
-    background: #ece6d8;
+    background: var(--color-surface-2);
     color: var(--color-text);
   }
 
   .wc-list-content mark {
-    background: #fef08a;
+    background: var(--mark-bg);
     color: inherit;
     padding: 0.1rem 0.2rem;
     border-radius: 2px;
@@ -643,13 +643,13 @@
     color: var(--color-muted);
     padding: 2rem;
     text-align: center;
-    background: #fbf8ef;
+    background: var(--color-surface);
     border-radius: 8px;
   }
 
   .wc-error {
-    color: #b91c1c;
-    background: #fef2f2;
+    color: var(--color-error);
+    background: var(--color-surface);
   }
 
   /* ── Header ── */
@@ -673,7 +673,7 @@
     gap: 0.4rem;
     padding: 0.5rem 0.75rem;
     background: none;
-    border: 1px solid #e3ddcf;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     cursor: pointer;
     font-size: 0.875rem;
@@ -682,14 +682,16 @@
   }
 
   .wc-view-btn:hover {
-    background: #ece6d8;
+    background: var(--color-surface-2);
     color: var(--color-text);
   }
 
+  /* Page-level controls are sectional, not global — they take --sec so the
+     calendar reads as part of Movement rather than as site chrome. */
   .wc-view-btn.active {
-    background: var(--color-accent);
-    border-color: var(--color-accent);
-    color: white;
+    background: var(--sec, var(--color-accent));
+    border-color: var(--sec, var(--color-accent));
+    color: var(--color-on-accent);
   }
 
   .wc-view-btn svg {
@@ -704,7 +706,7 @@
 
   .wc-nav button {
     background: none;
-    border: 1px solid #e3ddcf;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     padding: 0.4rem 0.75rem;
     cursor: pointer;
@@ -714,7 +716,7 @@
   }
 
   .wc-nav button:hover {
-    background: #ece6d8;
+    background: var(--color-surface-2);
   }
 
   .wc-nav span {
@@ -744,7 +746,7 @@
 
   .wc-cell {
     aspect-ratio: 1;
-    border: 1px solid #e3ddcf;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     padding: 0.5rem;
     display: flex;
@@ -756,7 +758,7 @@
   }
 
   .wc-empty {
-    background: #fbf8ef;
+    background: var(--color-surface);
     border-color: transparent;
   }
 
@@ -767,29 +769,31 @@
   }
 
   .wc-has-workout {
-    background: #fff7ed;
-    border-color: #fed7aa;
+    background: var(--wc-workout-bg);
+    border-color: var(--wc-workout-border);
     cursor: pointer;
     transition: all 0.2s;
   }
 
   .wc-has-workout:hover {
-    background: #ffedd5;
-    border-color: #fdba74;
-    box-shadow: 0 2px 8px rgba(251, 146, 60, 0.2);
+    background: var(--wc-workout-bg-hover);
+    border-color: var(--wc-workout);
+    box-shadow: var(--shadow-sm);
   }
 
+  /* A sauna day is a session too, so it reads as the workout fill with heat
+     blended across it rather than as an unrelated colour. */
   .wc-has-sauna {
-    background: linear-gradient(135deg, #fed7aa 0%, #fef08a 100%);
-    border-color: #f59e0b;
+    background: linear-gradient(135deg, var(--wc-sauna-bg) 0%, var(--wc-workout-bg) 100%);
+    border-color: var(--wc-sauna-border);
     cursor: pointer;
     transition: all 0.2s;
   }
 
   .wc-has-sauna:hover {
-    background: linear-gradient(135deg, #fdba74 0%, #fde047 100%);
-    border-color: #d97706;
-    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+    background: linear-gradient(135deg, var(--wc-sauna-bg) 0%, var(--wc-workout-bg-hover) 100%);
+    border-color: var(--wc-sauna);
+    box-shadow: var(--shadow-sm);
   }
 
   .wc-dots {
@@ -802,21 +806,21 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #f97316;
+    background: var(--wc-workout);
   }
 
   .wc-dot-workout {
-    background: #f97316;
+    background: var(--wc-workout);
   }
 
   .wc-dot-sauna {
-    background: linear-gradient(135deg, #f97316 0%, #eab308 100%);
-    box-shadow: 0 0 0 1px rgba(217, 119, 6, 0.35);
+    background: linear-gradient(135deg, var(--wc-workout) 0%, var(--wc-sauna) 100%);
+    box-shadow: 0 0 0 1px var(--wc-sauna-border);
   }
 
   .wc-today .wc-day-num {
-    background: var(--color-accent);
-    color: white;
+    background: var(--sec, var(--color-accent));
+    color: var(--color-on-accent);
     width: 1.75rem;
     height: 1.75rem;
     border-radius: 50%;
@@ -836,12 +840,12 @@
     color: var(--color-muted);
     padding: 2rem;
     text-align: center;
-    background: #fbf8ef;
+    background: var(--color-surface);
     border-radius: 8px;
   }
 
   .wc-list-item {
-    border: 1px solid #e3ddcf;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     overflow: hidden;
   }
@@ -851,8 +855,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem 1.25rem;
-    background: #fbf8ef;
-    border-bottom: 1px solid #e3ddcf;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
   }
 
   .wc-list-date {
@@ -875,7 +879,7 @@
   }
 
   .wc-list-expand:hover {
-    background: #e3ddcf;
+    background: var(--color-border);
     color: var(--color-accent);
   }
 
@@ -883,7 +887,7 @@
     padding: 1.25rem;
     margin: 0;
     white-space: pre-wrap;
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     font-size: 0.875rem;
     line-height: 1.7;
     color: var(--color-text);
@@ -903,20 +907,20 @@
   .wc-modal-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(5, 9, 12, 0.72);
     backdrop-filter: blur(4px);
   }
 
   .wc-modal-content {
     position: relative;
-    background: white;
+    background: var(--color-surface);
     border-radius: 12px;
     width: 100%;
     max-width: 600px;
     max-height: 80vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-lg);
     animation: modalIn 0.2s ease-out;
   }
 
@@ -936,7 +940,7 @@
     align-items: center;
     gap: 0.75rem;
     padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid #e3ddcf;
+    border-bottom: 1px solid var(--color-border);
   }
 
   .wc-modal-header strong {
@@ -947,7 +951,7 @@
 
   .wc-modal-nav {
     background: none;
-    border: 1px solid #e3ddcf;
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     padding: 0.4rem 0.6rem;
     cursor: pointer;
@@ -957,7 +961,7 @@
   }
 
   .wc-modal-nav:hover:not(:disabled) {
-    background: #ece6d8;
+    background: var(--color-surface-2);
   }
 
   .wc-modal-nav:disabled {
@@ -981,7 +985,7 @@
   }
 
   .wc-modal-close:hover {
-    background: #ece6d8;
+    background: var(--color-surface-2);
     color: var(--color-text);
   }
 
@@ -992,7 +996,7 @@
 
   #wc-modal-text {
     white-space: pre-wrap;
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     font-size: 0.9375rem;
     line-height: 1.75;
     color: var(--color-text);
