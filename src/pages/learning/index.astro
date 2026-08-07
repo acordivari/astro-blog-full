@@ -42,6 +42,7 @@ const x402 = {
   blurb:
     'Two open-source protocols that let AI agents safely act on a person’s behalf — first proving who they are, then paying within limits that person set. x401 handles the proof: before granting access, a service can require an agent to verify something real about itself (personhood, residency, membership). x402 handles the money: the agent pays with USDC, settled on-chain. A mandate layer ties it together, enforcing which human approved the spend and how much. First live on-chain payment landed June 2026.',
   stack: ['TypeScript', 'x401', 'x402 v2', 'W3C Digital Credentials API', 'OpenID4VP', 'OAuth 2.0', 'Coinbase CDP Wallet', 'viem', 'EIP-3009', 'Base Sepolia', 'USDC', 'Zod'],
+  live: 'https://agentic-payments-demo.onrender.com/',
   source: 'https://github.com/acordivari/coinbase-x402-implementation',
   spec: 'https://x401.proof.com/spec/latest/',
 };
@@ -77,14 +78,34 @@ const projects = [
   },
 ];
 
+// Each filled ring takes a different section hue, ordered as a sweep around the
+// hue wheel so no two neighbouring rings collide. Eighteen levels give nine
+// filled rings, so the six-hue sweep repeats once and a half. Written as token
+// names rather than hex so the mandala follows the theme like everything else.
+const ringHues = [
+  '--sec-learning',
+  '--sec-writing',
+  '--sec-music',
+  '--sec-birds',
+  '--sec-home',
+  '--sec-movement',
+];
+
 // Nested solid squares — each 94% of its parent, alternating dark/light fills
 // so only a crisp frame of each shows. The dark layers rotate, and because the
 // squares are nested, that rotation compounds down the tree into a logarithmic
 // spiral that blooms as it sweeps — the mandala from andrewdc92.github.io.
-function nestSquares(depth: number): string {
+// `ring` counts only the dark levels, so the hue sweep runs outermost inward.
+function nestSquares(depth: number, ring = 0): string {
   if (depth === 0) return '';
   const dark = depth % 2 === 0;
-  return `<div class="sq ${dark ? 'dark' : 'light'}">${nestSquares(depth - 1)}</div>`;
+  const style = dark
+    ? ` style="--ring:var(${ringHues[ring % ringHues.length]})"`
+    : '';
+  return `<div class="sq ${dark ? 'dark' : 'light'}"${style}>${nestSquares(
+    depth - 1,
+    dark ? ring + 1 : ring
+  )}</div>`;
 }
 const squares = nestSquares(18);
 ---
@@ -116,8 +137,11 @@ const squares = nestSquares(18);
           {x402.stack.map((tech) => <li>{tech}</li>)}
         </ul>
         <div class="links">
-          <a href={x402.source} target="_blank" rel="noopener noreferrer" class="link-primary">
-            Source &rarr;
+          <a href={x402.live} target="_blank" rel="noopener noreferrer" class="link-primary">
+            View live &rarr;
+          </a>
+          <a href={x402.source} target="_blank" rel="noopener noreferrer" class="link-muted">
+            Source
           </a>
           <a href={x402.spec} target="_blank" rel="noopener noreferrer" class="link-muted">
             Read the x401 spec
@@ -295,9 +319,10 @@ const squares = nestSquares(18);
   }
 
   /* .dark/.light name the alternation, not the value — the fills follow the
-     theme, and the filled ring takes the section hue. */
+     theme. Each ring carries its own --ring hue; the fallback chain keeps the
+     old single-hue behaviour if one is ever left unset. */
   .spiral :global(.sq.dark) {
-    background: var(--sec, var(--color-text));
+    background: var(--ring, var(--sec, var(--color-text)));
     animation: mandala 13s linear infinite;
   }
 
