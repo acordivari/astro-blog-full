@@ -397,11 +397,13 @@ const squares = nestSquares(18);
     white-space: nowrap;
   }
 
+  /* Blurb runs the full card measure, so its right edge lines up with the
+     title and the stack tags rather than stopping short at a 60ch cap. */
   .featured p {
     font-size: 1rem;
     color: var(--color-muted);
     line-height: 1.7;
-    max-width: 60ch;
+    max-width: none;
     margin-bottom: 1.25rem;
   }
 
