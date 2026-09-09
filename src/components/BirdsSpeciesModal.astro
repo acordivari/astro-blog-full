@@ -1,0 +1,46 @@
+---
+// BirdsSpeciesModal — the species detail overlay shared by every <BirdsOfPreyMap />
+// on the page. Rendered exactly once (its ids are page-unique); the map
+// component's script finds it by id and drives it for whichever map was clicked.
+---
+
+<div id="species-modal" class="species-modal">
+  <div class="species-modal-backdrop"></div>
+  <div class="species-modal-content">
+    <button id="species-modal-close" class="species-modal-close">&times;</button>
+
+    <div id="species-modal-loading" class="species-modal-loading">
+      Loading species information...
+    </div>
+
+    <div id="species-modal-body" class="species-modal-body" style="display:none">
+      <div class="species-modal-gallery">
+        <img id="species-modal-image" src="" alt="" />
+        <div id="species-modal-thumbnails" class="species-modal-thumbnails"></div>
+      </div>
+
+      <div class="species-modal-info">
+        <h2 id="species-modal-name"></h2>
+        <p id="species-modal-common" class="species-common-name"></p>
+
+        <div class="species-meta">
+          <span id="species-modal-order" class="species-tag"></span>
+          <span id="species-modal-family" class="species-tag"></span>
+          <span id="species-modal-sightings" class="species-tag"></span>
+        </div>
+
+        <div id="species-modal-description" class="species-description"></div>
+
+        <div id="species-modal-fieldnotes" class="species-fieldnotes"></div>
+        <div id="species-modal-wingspan" class="species-wingspan"></div>
+        <div id="species-modal-seasonality" class="species-seasonality"></div>
+
+        <div class="species-links">
+          <a id="species-link-wikipedia" href="#" target="_blank" rel="noopener">Wikipedia</a>
+          <a id="species-link-inaturalist" href="#" target="_blank" rel="noopener">iNaturalist</a>
+          <a id="species-link-gbif" href="#" target="_blank" rel="noopener">GBIF</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

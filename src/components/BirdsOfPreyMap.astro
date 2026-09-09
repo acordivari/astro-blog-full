@@ -1,60 +1,94 @@
 ---
-// BirdsOfPreyMap — Displays birds of prey sightings near Boulder, CO
-// Uses GBIF Occurrence API and Leaflet.js
+// BirdsOfPreyMap — birds of prey sightings around a location, from the GBIF
+// Occurrence API and rendered with Leaflet.js.
+//
+// A page can hold several of these, each with its own location, cache and
+// species list, so every element inside the widget is addressed by class and
+// looked up within the instance root rather than by a page-wide id. The species
+// detail overlay is the one shared piece: render <BirdsSpeciesModal /> exactly
+// once on any page that uses this component.
+interface Props {
+  lat: number;
+  lng: number;
+  place: string;
+  radius?: number;
+}
+
+const { lat, lng, place, radius = 100 } = Astro.props;
+
+// Deterministic per-instance prefix so the radius <label for> points at its own
+// slider rather than the first one on the page.
+const uid = `birds-${place.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
 ---
 
-<div id="birds-map-container">
+<div
+  class="birds-map-container"
+  data-birds-map
+  data-lat={lat}
+  data-lng={lng}
+  data-place={place}
+  data-radius={radius}
+>
   <div class="birds-header">
-    <h2 id="birds-heading">Birds of Prey Near Boulder, CO</h2>
-    <p class="birds-subtitle" id="birds-subtitle">Recent sightings within 100 miles of Boulder, CO — from GBIF</p>
+    <h2 class="birds-heading">Birds of Prey Near {place}</h2>
+    <p class="birds-subtitle">Recent sightings within {radius} miles of {place} — from GBIF</p>
   </div>
 
-  <form class="birds-search" id="birds-search-form">
+  <form class="birds-search birds-search-form">
     <input
       type="text"
-      id="birds-address"
       class="birds-address-input"
       placeholder="Enter an address, city, or place — e.g. Denver, CO"
       autocomplete="off"
-      aria-label="Address or place to search for birds of prey"
+      aria-label={`Address or place to search for birds of prey, replacing ${place}`}
     />
-    <button type="submit" id="birds-search-btn">Search</button>
+    <button type="submit" class="birds-search-btn">Search</button>
   </form>
 
   <div class="birds-radius">
-    <label for="birds-radius-slider">Search radius: <span id="birds-radius-value">100</span> miles</label>
-    <input type="range" id="birds-radius-slider" min="10" max="150" step="5" value="100" />
+    <label for={`${uid}-radius`}>
+      Search radius: <span class="birds-radius-value">{radius}</span> miles
+    </label>
+    <input
+      type="range"
+      id={`${uid}-radius`}
+      class="birds-radius-slider"
+      min="10"
+      max="150"
+      step="5"
+      value={radius}
+    />
   </div>
 
-  <div id="birds-place" class="birds-place"></div>
+  <div class="birds-place"></div>
 
   <div class="birds-controls">
-    <select id="birds-taxon">
+    <select class="birds-taxon" aria-label={`Filter birds of prey near ${place} by group`}>
       <option value="all">All Birds of Prey</option>
-      <option value="2877">Hawks, Eagles & Kites (Accipitriformes)</option>
-      <option value="7191">Falcons (Falconiformes)</option>
-      <option value="1458">Owls (Strigiformes)</option>
+      <option value="7191147">Hawks, Eagles &amp; Kites (Accipitriformes)</option>
+      <option value="7191407">Falcons (Falconiformes)</option>
+      <option value="1450">Owls (Strigiformes)</option>
     </select>
-    <button id="birds-refresh">Refresh Data</button>
+    <button class="birds-refresh">Refresh Data</button>
   </div>
 
-  <div id="birds-loading" class="birds-message">Loading bird sightings...</div>
-  <div id="birds-error" class="birds-message birds-error" style="display:none"></div>
+  <div class="birds-message birds-loading">Loading bird sightings...</div>
+  <div class="birds-message birds-error" style="display:none"></div>
 
-  <div id="birds-map"></div>
+  <div class="birds-map"></div>
 
-  <div id="birds-insights" class="birds-insights" style="display:none"></div>
+  <div class="birds-insights" style="display:none"></div>
 
-  <div id="birds-species-section" class="birds-species-section">
-    <h3>Species Found <span id="birds-species-count-label"></span></h3>
+  <div class="birds-species-section">
+    <h3>Species Found <span class="birds-species-count-label"></span></h3>
     <p class="birds-section-subtitle">Click a species for photos and details</p>
-    <div id="birds-species-grid" class="birds-species-grid"></div>
+    <div class="birds-species-grid"></div>
   </div>
 
   <div class="birds-stats">
-    <span id="birds-count">0 sightings</span>
-    <span id="birds-species">0 species</span>
-    <span id="birds-cache-status" class="cache-status"></span>
+    <span class="birds-count">0 sightings</span>
+    <span class="birds-species-count">0 species</span>
+    <span class="cache-status birds-cache-status"></span>
   </div>
 
   <p class="birds-attribution">
@@ -64,48 +98,6 @@
   </p>
 </div>
 
-<!-- Species Detail Modal -->
-<div id="species-modal" class="species-modal">
-  <div class="species-modal-backdrop"></div>
-  <div class="species-modal-content">
-    <button id="species-modal-close" class="species-modal-close">&times;</button>
-
-    <div id="species-modal-loading" class="species-modal-loading">
-      Loading species information...
-    </div>
-
-    <div id="species-modal-body" class="species-modal-body" style="display:none">
-      <div class="species-modal-gallery">
-        <img id="species-modal-image" src="" alt="" />
-        <div id="species-modal-thumbnails" class="species-modal-thumbnails"></div>
-      </div>
-
-      <div class="species-modal-info">
-        <h2 id="species-modal-name"></h2>
-        <p id="species-modal-common" class="species-common-name"></p>
-
-        <div class="species-meta">
-          <span id="species-modal-order" class="species-tag"></span>
-          <span id="species-modal-family" class="species-tag"></span>
-          <span id="species-modal-sightings" class="species-tag"></span>
-        </div>
-
-        <div id="species-modal-description" class="species-description"></div>
-
-        <div id="species-modal-fieldnotes" class="species-fieldnotes"></div>
-        <div id="species-modal-wingspan" class="species-wingspan"></div>
-        <div id="species-modal-seasonality" class="species-seasonality"></div>
-
-        <div class="species-links">
-          <a id="species-link-wikipedia" href="#" target="_blank" rel="noopener">Wikipedia</a>
-          <a id="species-link-inaturalist" href="#" target="_blank" rel="noopener">iNaturalist</a>
-          <a id="species-link-gbif" href="#" target="_blank" rel="noopener">GBIF</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
@@ -113,16 +105,14 @@
   import { getRaptorInfo, WINGSPAN_REFERENCES, WINGSPAN_AXIS_MAX_CM } from '../data/raptors';
   import type { RaptorInfo } from '../data/raptors';
 
-  // Load Leaflet dynamically
-  const leafletScript = document.createElement('script');
-  leafletScript.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-  leafletScript.onload = initMap;
-  document.head.appendChild(leafletScript);
+  /*
+   * This script is hoisted by Astro and runs once per page, no matter how many
+   * <BirdsOfPreyMap /> instances are on it. Everything below the "Per-instance
+   * widget" divider is created fresh for each map root; everything above it —
+   * the Leaflet loader, the IndexedDB cache, the GBIF request chain and the
+   * species modal — is shared by all of them.
+   */
 
-  // Default location: Boulder, CO — preserves the original view and the personal story
-  const DEFAULT_LAT = 40.015;
-  const DEFAULT_LNG = -105.2705;
-  const DEFAULT_PLACE = 'Boulder, CO';
   const MILES_TO_KM = 1.60934;
 
   // Leaflet paints to canvas/SVG, so it cannot read CSS variables itself.
@@ -130,22 +120,19 @@
   const mapToken = (name: string, fallback: string) =>
     getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
 
-  // Mutable search state — driven by the address box and radius slider
-  let currentLat = DEFAULT_LAT;
-  let currentLng = DEFAULT_LNG;
-  let currentRadiusMiles = 100;
-  let currentPlaceName = DEFAULT_PLACE;
-
-  // Leaflet layers for the search center + radius ring (redrawn on every search)
-  let centerMarker: any = null;
-  let radiusCircle: any = null;
-
-  // GBIF taxon keys for birds of prey
+  // GBIF backbone taxon keys for the three raptor orders.
+  //
+  // These are versioned by GBIF and the pre-2025 keys have since moved: 7191
+  // (Falcons) now matches nothing, and 1458 resolves to Orthoptera — crickets and
+  // grasshoppers — which the VALID_RAPTOR_ORDERS filter below silently discarded,
+  // leaving the map showing hawks only. Re-resolve via
+  // https://api.gbif.org/v1/species/match?rank=ORDER&kingdom=Animalia&name=<Order>
+  // if falcons or owls ever disappear again.
   const TAXON_KEYS = {
-    all: [2877, 7191, 1458], // Accipitriformes, Falconiformes, Strigiformes
-    2877: [2877], // Hawks, Eagles
-    7191: [7191], // Falcons
-    1458: [1458], // Owls
+    all: [7191147, 7191407, 1450], // Accipitriformes, Falconiformes, Strigiformes
+    7191147: [7191147], // Hawks, Eagles
+    7191407: [7191407], // Falcons
+    1450: [1450], // Owls
   };
 
   // Valid raptor orders - strict filter to exclude any non-raptor species
@@ -153,7 +140,9 @@
 
   // Cache configuration - using IndexedDB for larger storage
   const DB_NAME = 'birds-of-prey-db';
+
   const DB_VERSION = 1;
+
   const STORE_NAME = 'cache';
 
   interface CachedData {
@@ -162,11 +151,6 @@
     occurrences: any[];
     speciesNames: Record<string, string>;
   }
-
-  let map: any;
-  let markers: any[] = [];
-  let cachedOccurrences: any[] = [];
-  let cachedSpeciesNames: Record<string, string> = {};
 
   // Species data for current view
   interface SpeciesInfo {
@@ -177,7 +161,28 @@
     count: number;
     gbifKey: number;
   }
-  let speciesData: Map<string, SpeciesInfo> = new Map();
+
+  // Leaflet is loaded once and shared; every map awaits the same promise.
+  let leafletPromise: Promise<any> | null = null;
+
+  function loadLeaflet(): Promise<any> {
+    if ((window as any).L) return Promise.resolve((window as any).L);
+    if (!leafletPromise) {
+      leafletPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        script.onload = () => resolve((window as any).L);
+        script.onerror = () => reject(new Error('Failed to load Leaflet'));
+        document.head.appendChild(script);
+      });
+    }
+    return leafletPromise;
+  }
+
+  // Escape a value destined for an HTML attribute in a popup template.
+  function escapeAttr(value: string): string {
+    return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  }
 
   // IndexedDB helper functions
   function openDB(): Promise<IDBDatabase> {
@@ -196,7 +201,7 @@
 
   // Cache is keyed per location + radius so different searches don't clobber each other.
   function cacheKey(lat: number, lng: number, radiusMiles: number): string {
-    return `birds:${lat.toFixed(2)}:${lng.toFixed(2)}:${radiusMiles}`;
+    return `birds:v2:${lat.toFixed(2)}:${lng.toFixed(2)}:${radiusMiles}`;
   }
 
   async function loadFromCache(key: string): Promise<CachedData | null> {
@@ -223,7 +228,11 @@
     }
   }
 
-  async function saveToCache(key: string, occurrences: any[], speciesNames: Record<string, string>) {
+  async function saveToCache(
+    key: string,
+    occurrences: any[],
+    speciesNames: Record<string, string>
+  ): Promise<number | null> {
     try {
       const db = await openDB();
       const timestamp = Date.now();
@@ -234,134 +243,48 @@
         speciesNames,
       };
 
-      return new Promise<void>((resolve, reject) => {
+      return new Promise<number>((resolve, reject) => {
         const tx = db.transaction(STORE_NAME, 'readwrite');
         const store = tx.objectStore(STORE_NAME);
         const request = store.put(data);
         request.onerror = () => reject(request.error);
         request.onsuccess = () => {
           console.log('Saved to IndexedDB:', occurrences.length, 'occurrences,', Object.keys(speciesNames).length, 'species names');
-          updateCacheStatus(timestamp, true);
-          resolve();
+          resolve(timestamp);
         };
       });
     } catch (e) {
       console.warn('Failed to save to cache:', e);
+      return null;
     }
   }
 
-  function updateCacheStatus(timestamp: number, justRefreshed = false) {
-    const el = document.getElementById('birds-cache-status');
-    if (!el) return;
+  // GBIF rate-limits bursts, and a page with two maps would fire two request
+  // chains at once on load — so all GBIF calls queue through a single chain.
+  let gbifQueue: Promise<any> = Promise.resolve();
 
-    const date = new Date(timestamp);
-    const timeStr = date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-
-    if (justRefreshed) {
-      el.textContent = `Updated just now`;
-      el.className = 'cache-status fresh';
-    } else {
-      el.textContent = `Cached: ${timeStr}`;
-      el.className = 'cache-status';
-    }
+  function fetchJsonWithRetry(url: string, tries = 4): Promise<any> {
+    const run = gbifQueue.then(() => fetchJsonOnce(url, tries));
+    gbifQueue = run.catch(() => {});
+    return run;
   }
 
-  async function initMap() {
-    const L = (window as any).L;
-
-    // Initialize map centered on the default location
-    map = L.map('birds-map').setView([currentLat, currentLng], 8);
-
-
-    // Basemap follows the theme — standard OSM tiles glare badly against the
-    // dark ground, so the dark theme uses CARTO's dark raster (no API key).
-    const tiles =
-      mapToken('--map-tiles', 'dark') === 'light'
-        ? {
-            url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            attribution: '&copy; OpenStreetMap contributors',
-          }
-        : {
-            url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-          };
-
-    L.tileLayer(tiles.url, {
-      attribution: tiles.attribution,
-      maxZoom: 18,
-    }).addTo(map);
-
-    redrawCenter(false);
-    updateHeading();
-
-    // Load the default location (from cache if present, else fetch)
-    await runAnalysis(false);
-
-    wireControls();
-  }
-
-  // Draw / redraw the search-center marker and the radius ring for the current state.
-  function redrawCenter(fitBounds: boolean) {
-    const L = (window as any).L;
-    if (centerMarker) map.removeLayer(centerMarker);
-    if (radiusCircle) map.removeLayer(radiusCircle);
-
-    centerMarker = L.circleMarker([currentLat, currentLng], {
-      radius: 7,
-      fillColor: mapToken('--map-center', '#0a0a0a'),
-      color: mapToken('--map-center', '#0a0a0a'),
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 0.9,
-    })
-      .addTo(map)
-      .bindPopup(`<strong>${currentPlaceName}</strong><br>Search center`);
-
-    radiusCircle = L.circle([currentLat, currentLng], {
-      radius: currentRadiusMiles * MILES_TO_KM * 1000,
-      color: mapToken('--map-radius', '#737373'),
-      fillColor: mapToken('--map-radius', '#737373'),
-      fillOpacity: 0.04,
-      weight: 1,
-      dashArray: '4, 6',
-    }).addTo(map);
-
-    if (fitBounds) {
-      map.flyToBounds(radiusCircle.getBounds(), { padding: [24, 24], duration: 0.6 });
-    }
-  }
-
-  function updateHeading() {
-    const heading = document.getElementById('birds-heading');
-    const subtitle = document.getElementById('birds-subtitle');
-    if (heading) heading.textContent = `Birds of Prey Near ${currentPlaceName}`;
-    if (subtitle) {
-      subtitle.textContent = `Recent sightings within ${currentRadiusMiles} miles of ${currentPlaceName} — from GBIF`;
-    }
-  }
-
-  // Run the analysis for the current location/radius: use cache when available, else fetch.
-  async function runAnalysis(forceFetch: boolean) {
-    updateHeading();
-    const key = cacheKey(currentLat, currentLng, currentRadiusMiles);
-    const filter = (document.getElementById('birds-taxon') as HTMLSelectElement).value;
-
-    if (!forceFetch) {
-      const cached = await loadFromCache(key);
-      if (cached && Array.isArray(cached.occurrences)) {
-        cachedOccurrences = cached.occurrences;
-        cachedSpeciesNames = cached.speciesNames;
-        displayBirdData(filter);
-        updateCacheStatus(cached.timestamp);
-        return;
+  // Fetch JSON with retry + backoff. GBIF returns 429 under bursts of requests;
+  // a short exponential backoff (honoring Retry-After when present) recovers cleanly.
+  async function fetchJsonOnce(url: string, tries = 4): Promise<any> {
+    let delay = 600;
+    for (let attempt = 0; attempt < tries; attempt++) {
+      const res = await fetch(url);
+      if (res.ok) return res.json();
+      const retryable = res.status === 429 || res.status >= 500;
+      if (!retryable || attempt === tries - 1) {
+        throw new Error(`GBIF API error: ${res.status}`);
       }
+      const retryAfter = parseInt(res.headers.get('retry-after') || '', 10);
+      const wait = Number.isFinite(retryAfter) ? retryAfter * 1000 : delay;
+      await new Promise((r) => setTimeout(r, wait));
+      delay *= 2;
     }
-    await fetchAndCacheBirdData(filter);
   }
 
   // Geocode an address / place name via Nominatim (OpenStreetMap). No API key needed.
@@ -385,301 +308,6 @@
     return `${parts[0]}, ${parts[parts.length - 2]}`;
   }
 
-  function wireControls() {
-    // Address search
-    const form = document.getElementById('birds-search-form') as HTMLFormElement;
-    const input = document.getElementById('birds-address') as HTMLInputElement;
-    const searchBtn = document.getElementById('birds-search-btn') as HTMLButtonElement;
-    const placeEl = document.getElementById('birds-place')!;
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const q = input.value.trim();
-      if (!q) return;
-
-      placeEl.textContent = 'Finding location…';
-      placeEl.className = 'birds-place';
-      searchBtn.disabled = true;
-
-      try {
-        const geo = await geocodeAddress(q);
-        if (!geo) {
-          placeEl.textContent = `Couldn't find "${q}". Try a city, ZIP code, or a more specific address.`;
-          placeEl.className = 'birds-place birds-place-error';
-          return;
-        }
-        currentLat = geo.lat;
-        currentLng = geo.lng;
-        currentPlaceName = shortPlaceName(geo.displayName);
-        placeEl.innerHTML = `Showing results within ${currentRadiusMiles} mi of <strong>${geo.displayName}</strong>`;
-        placeEl.className = 'birds-place';
-        redrawCenter(true);
-        await runAnalysis(false);
-      } catch (err) {
-        console.error(err);
-        placeEl.textContent = 'Location lookup failed. Please check your connection and try again.';
-        placeEl.className = 'birds-place birds-place-error';
-      } finally {
-        searchBtn.disabled = false;
-      }
-    });
-
-    // Radius slider — update the label live, re-run on release (debounced)
-    const slider = document.getElementById('birds-radius-slider') as HTMLInputElement;
-    const radiusValue = document.getElementById('birds-radius-value')!;
-    let radiusTimer: number | undefined;
-
-    slider.addEventListener('input', () => {
-      radiusValue.textContent = slider.value;
-    });
-
-    slider.addEventListener('change', () => {
-      currentRadiusMiles = parseInt(slider.value, 10);
-      redrawCenter(true);
-      window.clearTimeout(radiusTimer);
-      radiusTimer = window.setTimeout(() => runAnalysis(false), 250);
-    });
-
-    // Taxon filter — re-render from cache
-    document.getElementById('birds-taxon')!.addEventListener('change', (e) => {
-      const value = (e.target as HTMLSelectElement).value;
-      displayBirdData(value);
-    });
-
-    // Force refresh from the API for the current location
-    document.getElementById('birds-refresh')!.addEventListener('click', async () => {
-      await runAnalysis(true);
-    });
-  }
-
-  // Fetch JSON with retry + backoff. GBIF returns 429 under bursts of requests;
-  // a short exponential backoff (honoring Retry-After when present) recovers cleanly.
-  async function fetchJsonWithRetry(url: string, tries = 4): Promise<any> {
-    let delay = 600;
-    for (let attempt = 0; attempt < tries; attempt++) {
-      const res = await fetch(url);
-      if (res.ok) return res.json();
-      const retryable = res.status === 429 || res.status >= 500;
-      if (!retryable || attempt === tries - 1) {
-        throw new Error(`GBIF API error: ${res.status}`);
-      }
-      const retryAfter = parseInt(res.headers.get('retry-after') || '', 10);
-      const wait = Number.isFinite(retryAfter) ? retryAfter * 1000 : delay;
-      await new Promise((r) => setTimeout(r, wait));
-      delay *= 2;
-    }
-  }
-
-  // Fetch fresh data from API and cache it
-  async function fetchAndCacheBirdData(currentFilter: string) {
-    const elLoading = document.getElementById('birds-loading')!;
-    const elError = document.getElementById('birds-error')!;
-
-    // Clear existing markers
-    markers.forEach((m) => map.removeLayer(m));
-    markers = [];
-
-    elLoading.style.display = 'block';
-    elError.style.display = 'none';
-
-    try {
-      // Always fetch ALL taxa to build complete cache
-      const allTaxonKeys = TAXON_KEYS.all;
-      const allOccurrences: any[] = [];
-
-      const GBIF_LIMIT = 300;
-      const MAX_PAGES = 4;
-
-      for (const taxonKey of allTaxonKeys) {
-        let offset = 0;
-        let page = 0;
-        let hasMore = true;
-
-        while (hasMore && page < MAX_PAGES) {
-          const params = new URLSearchParams({
-            taxonKey: String(taxonKey),
-            geoDistance: `${currentLat},${currentLng},${currentRadiusMiles}mi`,
-            hasCoordinate: 'true',
-            hasGeospatialIssue: 'false',
-            limit: String(GBIF_LIMIT),
-            offset: String(offset),
-            year: `${new Date().getFullYear() - 5},${new Date().getFullYear()}`,
-          });
-
-          const data = await fetchJsonWithRetry(
-            `https://api.gbif.org/v1/occurrence/search?${params}`
-          );
-          allOccurrences.push(...data.results);
-
-          hasMore = data.endOfRecords === false && data.results.length === GBIF_LIMIT;
-          offset += GBIF_LIMIT;
-          page++;
-        }
-      }
-
-      // Filter to valid raptors
-      const validOccurrences = allOccurrences.filter(occ => {
-        if (!occ.decimalLatitude || !occ.decimalLongitude) return false;
-        if (!occ.order || !VALID_RAPTOR_ORDERS.includes(occ.order)) return false;
-        if (!occ.species && !occ.genericName) return false;
-        return true;
-      });
-
-      // Store in memory cache - only keep fields we need to reduce size
-      cachedOccurrences = validOccurrences.map(occ => ({
-        decimalLatitude: occ.decimalLatitude,
-        decimalLongitude: occ.decimalLongitude,
-        species: occ.species,
-        genericName: occ.genericName,
-        order: occ.order,
-        family: occ.family,
-        eventDate: occ.eventDate,
-        stateProvince: occ.stateProvince,
-        speciesKey: occ.speciesKey,
-        taxonKey: occ.taxonKey,
-      }));
-
-      // Build species data and fetch common names
-      speciesData.clear();
-      for (const occ of validOccurrences) {
-        const speciesName = occ.species || occ.genericName;
-        if (!speciesData.has(speciesName)) {
-          speciesData.set(speciesName, {
-            scientificName: speciesName,
-            vernacularName: '',
-            order: occ.order,
-            family: occ.family || 'Unknown',
-            count: 1,
-            gbifKey: occ.speciesKey || occ.taxonKey || 0,
-          });
-        } else {
-          speciesData.get(speciesName)!.count++;
-        }
-      }
-
-      // Fetch common names
-      await fetchMissingCommonNames();
-
-      // Cache species names for future use
-      cachedSpeciesNames = {};
-      speciesData.forEach((info, name) => {
-        if (info.vernacularName) {
-          cachedSpeciesNames[name] = info.vernacularName;
-        }
-      });
-
-      // Save to IndexedDB under this location's key
-      await saveToCache(cacheKey(currentLat, currentLng, currentRadiusMiles), cachedOccurrences, cachedSpeciesNames);
-
-      elLoading.style.display = 'none';
-
-      // Display with current filter
-      displayBirdData(currentFilter);
-
-    } catch (err) {
-      elLoading.style.display = 'none';
-      elError.style.display = 'block';
-      elError.textContent = 'Bird data is temporarily unavailable (the GBIF service may be busy). Please try again in a moment.';
-      console.error(err);
-
-      // Clear the stale view so we don't show a previous location's results under the new heading.
-      markers.forEach((m) => map.removeLayer(m));
-      markers = [];
-      cachedOccurrences = [];
-      speciesData.clear();
-      const gridEl = document.getElementById('birds-species-grid');
-      if (gridEl) gridEl.innerHTML = '';
-      const insightsEl = document.getElementById('birds-insights');
-      if (insightsEl) insightsEl.style.display = 'none';
-      document.getElementById('birds-count')!.textContent = '0 sightings';
-      document.getElementById('birds-species')!.textContent = '0 species';
-    }
-  }
-
-  // Display data from cache, filtered by taxon
-  function displayBirdData(taxonFilter: string) {
-    const L = (window as any).L;
-    const elLoading = document.getElementById('birds-loading')!;
-    const elCount = document.getElementById('birds-count')!;
-    const elSpecies = document.getElementById('birds-species')!;
-
-    elLoading.style.display = 'none';
-
-    // Clear existing markers
-    markers.forEach((m) => map.removeLayer(m));
-    markers = [];
-
-    if (cachedOccurrences.length === 0) {
-      elCount.textContent = '0 sightings';
-      elSpecies.textContent = '0 species';
-      return;
-    }
-
-    // Filter by selected taxon
-    const taxonKeys = TAXON_KEYS[taxonFilter as keyof typeof TAXON_KEYS];
-    const orderMap: Record<number, string> = {
-      2877: 'Accipitriformes',
-      7191: 'Falconiformes',
-      1458: 'Strigiformes',
-    };
-    const allowedOrders = taxonKeys.map(k => orderMap[k]);
-
-    const filteredOccurrences = cachedOccurrences.filter(occ =>
-      allowedOrders.includes(occ.order)
-    );
-
-    // Rebuild species data for filtered view
-    speciesData.clear();
-    for (const occ of filteredOccurrences) {
-      const speciesName = occ.species || occ.genericName;
-
-      if (speciesData.has(speciesName)) {
-        speciesData.get(speciesName)!.count++;
-      } else {
-        speciesData.set(speciesName, {
-          scientificName: speciesName,
-          vernacularName: cachedSpeciesNames[speciesName] || '',
-          order: occ.order,
-          family: occ.family || 'Unknown',
-          count: 1,
-          gbifKey: occ.speciesKey || occ.taxonKey || 0,
-        });
-      }
-
-      // Create marker
-      const marker = L.circleMarker([occ.decimalLatitude, occ.decimalLongitude], {
-        radius: 6,
-        fillColor: getColorForOrder(occ.order),
-        color: mapToken('--map-marker-stroke', '#fff'),
-        weight: 1,
-        opacity: 1,
-        fillOpacity: 0.8,
-      });
-
-      const date = occ.eventDate
-        ? new Date(occ.eventDate).toLocaleDateString()
-        : 'Date unknown';
-
-      marker.bindPopup(`
-        <strong>${speciesName}</strong><br>
-        Order: ${occ.order}<br>
-        Date: ${date}<br>
-        ${occ.stateProvince ? `Location: ${occ.stateProvince}<br>` : ''}
-        <button class="popup-species-btn" onclick="window.openSpeciesModal('${speciesName.replace(/'/g, "\\'")}')">View Species Details</button>
-      `);
-
-      marker.addTo(map);
-      markers.push(marker);
-    }
-
-    // Render species list + area insights
-    renderSpeciesList();
-    renderInsights(filteredOccurrences.length);
-
-    elCount.textContent = `${filteredOccurrences.length} sightings`;
-    elSpecies.textContent = `${speciesData.size} species`;
-  }
-
   // Capitalize the first letter (for size-class labels etc.)
   function capitalize(s: string): string {
     return s.charAt(0).toUpperCase() + s.slice(1);
@@ -694,56 +322,6 @@
     return { text: 'Rare here', cls: 'freq-rare' };
   }
 
-  // Plain-language summary panel above the species grid.
-  function renderInsights(totalSightings: number) {
-    const el = document.getElementById('birds-insights');
-    if (!el) return;
-    el.style.display = 'block';
-
-    const entries = Array.from(speciesData.entries())
-      .filter(([name, info]) => name !== 'Unknown' && info.order !== 'Unknown')
-      .sort((a, b) => b[1].count - a[1].count);
-
-    if (entries.length === 0) {
-      el.innerHTML = `<p class="birds-insights-lead">No birds of prey were reported within ${currentRadiusMiles} miles of <strong>${currentPlaceName}</strong> in the last five years. Try widening the radius or searching a different place.</p>`;
-      return;
-    }
-
-    const nameOf = ([name, info]: [string, SpeciesInfo]) => info.vernacularName || name;
-    const top = entries[0];
-    const rare = entries[entries.length - 1];
-
-    const orders: Record<string, number> = { Accipitriformes: 0, Falconiformes: 0, Strigiformes: 0 };
-    entries.forEach(([, info]) => {
-      if (orders[info.order] !== undefined) orders[info.order]++;
-    });
-
-    // Only call out a "rare find" when it's genuinely uncommon relative to the top species.
-    const showRare = rare[0] !== top[0] && rare[1].count <= Math.max(2, top[1].count * 0.1);
-    const rareSentence = showRare
-      ? ` A rarer find here is <strong>${nameOf(rare)}</strong>, with just ${rare[1].count} ${rare[1].count === 1 ? 'report' : 'reports'}.`
-      : '';
-
-    el.innerHTML = `
-      <div class="birds-insights-grid">
-        <div class="insight-stat"><span class="insight-num">${entries.length}</span><span class="insight-label">species</span></div>
-        <div class="insight-stat"><span class="insight-num">${totalSightings}</span><span class="insight-label">sightings</span></div>
-        <div class="insight-stat"><span class="insight-num">${currentRadiusMiles}</span><span class="insight-label">mile radius</span></div>
-      </div>
-      <p class="birds-insights-lead">
-        Within ${currentRadiusMiles} miles of <strong>${currentPlaceName}</strong>, observers have logged
-        <strong>${entries.length}</strong> ${entries.length === 1 ? 'species' : 'species'} of birds of prey.
-        The one you're most likely to see is <strong>${nameOf(top)}</strong>
-        (${top[1].count} ${top[1].count === 1 ? 'report' : 'reports'}).${rareSentence}
-      </p>
-      <div class="birds-insights-breakdown">
-        <span><span class="dot-inline" style="background:${getColorForOrder('Accipitriformes')}"></span> ${orders.Accipitriformes} hawk &amp; eagle ${orders.Accipitriformes === 1 ? 'species' : 'species'}</span>
-        <span><span class="dot-inline" style="background:${getColorForOrder('Falconiformes')}"></span> ${orders.Falconiformes} falcon ${orders.Falconiformes === 1 ? 'species' : 'species'}</span>
-        <span><span class="dot-inline" style="background:${getColorForOrder('Strigiformes')}"></span> ${orders.Strigiformes} owl ${orders.Strigiformes === 1 ? 'species' : 'species'}</span>
-      </div>
-    `;
-  }
-
   function getColorForOrder(order: string): string {
     switch (order) {
       case 'Accipitriformes':
@@ -754,206 +332,6 @@
         return mapToken('--map-owl', '#3b82f6'); // Owls
       default:
         return mapToken('--map-other', '#6b7280');
-    }
-  }
-
-  // Fetch common names for species missing vernacularName
-  // Uses multiple sources: Wikipedia (best for English), iNaturalist, then GBIF
-  async function fetchMissingCommonNames() {
-    const speciesNeedingNames = Array.from(speciesData.entries())
-      .filter(([_, info]) => !info.vernacularName)
-      .slice(0, 50);
-
-    const fetchPromises = speciesNeedingNames.map(async ([name, info]) => {
-      try {
-        // 1. Try Wikipedia first - article titles are often common English names
-        const wikiTitle = name.replace(/ /g, '_');
-        const wikiResponse = await fetch(
-          `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTitle)}`
-        );
-        if (wikiResponse.ok) {
-          const wikiData = await wikiResponse.json();
-          // Wikipedia often redirects scientific names to common name articles
-          // Check if title differs from scientific name and looks like English
-          const pageTitle = wikiData.title;
-          if (pageTitle &&
-              pageTitle.toLowerCase() !== name.toLowerCase() &&
-              /^[A-Za-z\s\-']+$/.test(pageTitle)) {
-            info.vernacularName = pageTitle;
-            return;
-          }
-        }
-
-        // 2. Try iNaturalist - use both english_common_name and preferred_common_name
-        const inatResponse = await fetch(
-          `https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(name)}&rank=species&per_page=1&locale=en`
-        );
-        if (inatResponse.ok) {
-          const inatData = await inatResponse.json();
-          const taxon = inatData.results?.[0];
-          const commonName = taxon?.english_common_name || taxon?.preferred_common_name;
-          if (commonName && /^[A-Za-z\s\-']+$/.test(commonName)) {
-            info.vernacularName = commonName;
-            return;
-          }
-        }
-
-        // 3. Last resort: GBIF with strict ASCII check
-        if (info.gbifKey) {
-          const response = await fetch(
-            `https://api.gbif.org/v1/species/${info.gbifKey}/vernacularNames?limit=20`
-          );
-          if (response.ok) {
-            const data = await response.json();
-            const englishName = data.results?.find(
-              (n: any) => (n.language === 'eng' || n.language === 'en') &&
-                          /^[A-Za-z\s\-']+$/.test(n.vernacularName)
-            );
-            if (englishName?.vernacularName) {
-              info.vernacularName = englishName.vernacularName;
-            }
-          }
-        }
-      } catch {
-        // Ignore errors for individual species lookups
-      }
-    });
-
-    await Promise.all(fetchPromises);
-  }
-
-  /* ── Species Grid ── */
-  function renderSpeciesList() {
-    const gridEl = document.getElementById('birds-species-grid')!;
-    const countLabel = document.getElementById('birds-species-count-label')!;
-    gridEl.innerHTML = '';
-
-    // Filter out unknown and sort by count descending
-    const filtered = Array.from(speciesData.entries())
-      .filter(([name, info]) => name !== 'Unknown' && info.order !== 'Unknown')
-      .sort((a, b) => b[1].count - a[1].count);
-
-    countLabel.textContent = `(${filtered.length})`;
-
-    const maxCount = filtered.length > 0 ? filtered[0][1].count : 0;
-
-    for (const [name, info] of filtered) {
-      const displayName = info.vernacularName || name;
-      const raptor = getRaptorInfo(name, info.family);
-      const freq = frequencyLabel(info.count, maxCount);
-      const sizeText = raptor
-        ? `${capitalize(raptor.sizeClass)} · ${raptor.wingspanCm[0]}–${raptor.wingspanCm[1]} cm wingspan`
-        : '';
-
-      const card = document.createElement('div');
-      card.className = 'species-card';
-      card.innerHTML = `
-        <div class="species-card-color" style="background: ${getColorForOrder(info.order)}"></div>
-        <div class="species-card-content">
-          <span class="species-card-common">${displayName}</span>
-          <span class="species-card-scientific">${name}</span>
-          ${sizeText ? `<span class="species-card-size">${sizeText}</span>` : ''}
-        </div>
-        <div class="species-card-meta">
-          <span class="species-freq ${freq.cls}">${freq.text}</span>
-          <span class="species-card-count">${info.count} ${info.count === 1 ? 'report' : 'reports'}</span>
-        </div>
-      `;
-      card.addEventListener('click', () => openSpeciesModal(name));
-      gridEl.appendChild(card);
-    }
-  }
-
-  /* ── Species Modal ── */
-  async function openSpeciesModal(speciesName: string) {
-    const modal = document.getElementById('species-modal')!;
-    const loading = document.getElementById('species-modal-loading')!;
-    const body = document.getElementById('species-modal-body')!;
-
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    loading.style.display = 'block';
-    body.style.display = 'none';
-
-    const info = speciesData.get(speciesName);
-    if (!info) {
-      loading.textContent = 'Species not found';
-      return;
-    }
-
-    try {
-      // Fetch data from both APIs in parallel
-      const [wikiData, inatData] = await Promise.all([
-        fetchWikipediaData(speciesName),
-        fetchINaturalistData(speciesName),
-      ]);
-
-      // Populate modal
-      document.getElementById('species-modal-name')!.textContent = speciesName;
-      document.getElementById('species-modal-common')!.textContent = info.vernacularName || wikiData.commonName || inatData.commonName || '';
-      document.getElementById('species-modal-order')!.textContent = info.order;
-      document.getElementById('species-modal-family')!.textContent = info.family;
-      document.getElementById('species-modal-sightings')!.textContent = `${info.count} sightings`;
-
-      // Description from Wikipedia
-      const descEl = document.getElementById('species-modal-description')!;
-      descEl.innerHTML = wikiData.extract || '<em>No description available.</em>';
-
-      // Curated enrichment: how-to-spot notes, wingspan visual, seasonality
-      const raptor = getRaptorInfo(speciesName, info.family);
-      renderFieldNotes(raptor);
-      renderWingspanBar(raptor);
-      renderSeasonality(speciesName);
-
-      // Images - prefer iNaturalist, fallback to Wikipedia
-      const mainImage = document.getElementById('species-modal-image') as HTMLImageElement;
-      const thumbnails = document.getElementById('species-modal-thumbnails')!;
-      thumbnails.innerHTML = '';
-
-      // iNaturalist large photos lead — Wikipedia appended as supplement only
-      const allPhotos = [...inatData.photos];
-      if (wikiData.image && !allPhotos.includes(wikiData.image)) {
-        allPhotos.push(wikiData.image);
-      }
-
-      if (allPhotos.length > 0) {
-        mainImage.src = allPhotos[0];
-        mainImage.alt = speciesName;
-        mainImage.style.display = 'block';
-
-        // Add thumbnails if multiple photos
-        if (allPhotos.length > 1) {
-          allPhotos.slice(0, 6).forEach((url, idx) => {
-            const thumb = document.createElement('img');
-            thumb.src = url;
-            thumb.alt = `${speciesName} photo ${idx + 1}`;
-            thumb.className = idx === 0 ? 'active' : '';
-            thumb.addEventListener('click', () => {
-              mainImage.src = url;
-              thumbnails.querySelectorAll('img').forEach(t => t.classList.remove('active'));
-              thumb.classList.add('active');
-            });
-            thumbnails.appendChild(thumb);
-          });
-        }
-      } else {
-        mainImage.style.display = 'none';
-      }
-
-      // Links
-      const wikiTitle = speciesName.replace(/ /g, '_');
-      (document.getElementById('species-link-wikipedia') as HTMLAnchorElement).href =
-        `https://en.wikipedia.org/wiki/${wikiTitle}`;
-      (document.getElementById('species-link-inaturalist') as HTMLAnchorElement).href =
-        `https://www.inaturalist.org/taxa/search?q=${encodeURIComponent(speciesName)}`;
-      (document.getElementById('species-link-gbif') as HTMLAnchorElement).href =
-        `https://www.gbif.org/species/${info.gbifKey}`;
-
-      loading.style.display = 'none';
-      body.style.display = 'flex';
-    } catch (err) {
-      console.error('Error loading species data:', err);
-      loading.textContent = 'Failed to load species information.';
     }
   }
 
@@ -1097,54 +475,6 @@
     `;
   }
 
-  // Seasonality: when this species is reported near the current location.
-  function renderSeasonality(speciesName: string) {
-    const el = document.getElementById('species-modal-seasonality')!;
-    const months = new Array(12).fill(0);
-    let dated = 0;
-
-    for (const occ of cachedOccurrences) {
-      const nm = occ.species || occ.genericName;
-      if (nm !== speciesName || !occ.eventDate) continue;
-      const m = new Date(occ.eventDate).getMonth();
-      if (!isNaN(m)) {
-        months[m]++;
-        dated++;
-      }
-    }
-
-    // Too few dated records to say anything meaningful.
-    if (dated < 4) {
-      el.innerHTML = '';
-      return;
-    }
-
-    const max = Math.max(...months);
-    const short = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-    const full = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-    const peaks = months
-      .map((v, i) => ({ v, i }))
-      .filter((o) => o.v > 0 && o.v >= max * 0.85)
-      .map((o) => full[o.i]);
-
-    const bars = months
-      .map(
-        (v, i) => `
-        <div class="season-bar-wrap" title="${full[i]}: ${v} ${v === 1 ? 'report' : 'reports'}">
-          <div class="season-bar" style="height:${max ? (v / max) * 100 : 0}%"></div>
-          <span class="season-bar-label">${short[i]}</span>
-        </div>`
-      )
-      .join('');
-
-    el.innerHTML = `
-      <h4 class="species-block-title">When it's reported near ${currentPlaceName}</h4>
-      <div class="season-chart">${bars}</div>
-      <p class="species-block-caption">Most reported in ${formatPeaks(peaks)}. Based on ${dated} dated ${dated === 1 ? 'sighting' : 'sightings'} — counts reflect when people report birds, not only when the birds are present.</p>
-    `;
-  }
-
   function formatPeaks(peaks: string[]): string {
     if (peaks.length === 0) return 'no particular month';
     if (peaks.length >= 6) return 'many months (fairly year-round)';
@@ -1158,19 +488,749 @@
     document.body.style.overflow = '';
   }
 
-  // Expose openSpeciesModal globally for popup buttons
-  (window as any).openSpeciesModal = openSpeciesModal;
-
-  // Modal event listeners
-  document.getElementById('species-modal-close')!.addEventListener('click', closeSpeciesModal);
-  document.querySelector('.species-modal-backdrop')!.addEventListener('click', closeSpeciesModal);
+  // Modal chrome is shared, so it is wired up once here; the per-instance code
+  // only fills it in. The optional chaining keeps a map usable on a page that
+  // forgot to render <BirdsSpeciesModal />.
+  document.getElementById('species-modal-close')?.addEventListener('click', closeSpeciesModal);
+  document.querySelector('.species-modal-backdrop')?.addEventListener('click', closeSpeciesModal);
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeSpeciesModal();
   });
-</script>
 
+  /* ── Per-instance widget ── */
+
+  // Each map root carries its own starting point, radius and place name as data
+  // attributes, and owns its own Leaflet map, markers, cache and species data.
+  function createBirdsMap(root: HTMLElement) {
+    const q = (sel: string) => root.querySelector(sel) as HTMLElement;
+
+    const DEFAULT_LAT = parseFloat(root.dataset.lat || '0');
+    const DEFAULT_LNG = parseFloat(root.dataset.lng || '0');
+    const DEFAULT_PLACE = root.dataset.place || 'this area';
+    const DEFAULT_RADIUS = parseInt(root.dataset.radius || '100', 10);
+
+    // Mutable search state — driven by the address box and radius slider
+    let currentLat = DEFAULT_LAT;
+    let currentLng = DEFAULT_LNG;
+    let currentRadiusMiles = DEFAULT_RADIUS;
+    let currentPlaceName = DEFAULT_PLACE;
+
+    // Leaflet layers for the search center + radius ring (redrawn on every search)
+    let centerMarker: any = null;
+    let radiusCircle: any = null;
+
+    let map: any;
+    let markers: any[] = [];
+    let cachedOccurrences: any[] = [];
+    let cachedSpeciesNames: Record<string, string> = {};
+
+    // Species data for current view
+    let speciesData: Map<string, SpeciesInfo> = new Map();
+
+    async function initMap() {
+      const L = await loadLeaflet();
+
+      // Initialize map centered on this instance's default location
+      map = L.map(q('.birds-map')).setView([currentLat, currentLng], 8);
+
+      // Basemap follows the theme — standard OSM tiles glare badly against the
+      // dark ground, so the dark theme uses CARTO's dark raster (no API key).
+      const tiles =
+        mapToken('--map-tiles', 'dark') === 'light'
+          ? {
+              url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+              attribution: '&copy; OpenStreetMap contributors',
+            }
+          : {
+              url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+              attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            };
+
+      L.tileLayer(tiles.url, {
+        attribution: tiles.attribution,
+        maxZoom: 18,
+      }).addTo(map);
+
+      redrawCenter(false);
+      updateHeading();
+
+      // Load the default location (from cache if present, else fetch)
+      await runAnalysis(false);
+
+      wireControls();
+    }
+
+    function updateCacheStatus(timestamp: number, justRefreshed = false) {
+      const el = q('.birds-cache-status');
+      if (!el) return;
+
+      const date = new Date(timestamp);
+      const timeStr = date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+
+      el.textContent = justRefreshed ? `Updated just now` : `Cached: ${timeStr}`;
+      el.classList.toggle('fresh', justRefreshed);
+    }
+
+    // Draw / redraw the search-center marker and the radius ring for the current state.
+    function redrawCenter(fitBounds: boolean) {
+      const L = (window as any).L;
+      if (centerMarker) map.removeLayer(centerMarker);
+      if (radiusCircle) map.removeLayer(radiusCircle);
+
+      centerMarker = L.circleMarker([currentLat, currentLng], {
+        radius: 7,
+        fillColor: mapToken('--map-center', '#0a0a0a'),
+        color: mapToken('--map-center', '#0a0a0a'),
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.9,
+      })
+        .addTo(map)
+        .bindPopup(`<strong>${currentPlaceName}</strong><br>Search center`);
+
+      radiusCircle = L.circle([currentLat, currentLng], {
+        radius: currentRadiusMiles * MILES_TO_KM * 1000,
+        color: mapToken('--map-radius', '#737373'),
+        fillColor: mapToken('--map-radius', '#737373'),
+        fillOpacity: 0.04,
+        weight: 1,
+        dashArray: '4, 6',
+      }).addTo(map);
+
+      if (fitBounds) {
+        map.flyToBounds(radiusCircle.getBounds(), { padding: [24, 24], duration: 0.6 });
+      }
+    }
+
+    function updateHeading() {
+      const heading = q('.birds-heading');
+      const subtitle = q('.birds-subtitle');
+      if (heading) heading.textContent = `Birds of Prey Near ${currentPlaceName}`;
+      if (subtitle) {
+        subtitle.textContent = `Recent sightings within ${currentRadiusMiles} miles of ${currentPlaceName} — from GBIF`;
+      }
+    }
+
+    // Run the analysis for the current location/radius: use cache when available, else fetch.
+    async function runAnalysis(forceFetch: boolean) {
+      updateHeading();
+      const key = cacheKey(currentLat, currentLng, currentRadiusMiles);
+      const filter = (q('.birds-taxon') as HTMLSelectElement).value;
+
+      if (!forceFetch) {
+        const cached = await loadFromCache(key);
+        if (cached && Array.isArray(cached.occurrences)) {
+          cachedOccurrences = cached.occurrences;
+          cachedSpeciesNames = cached.speciesNames;
+          displayBirdData(filter);
+          updateCacheStatus(cached.timestamp);
+          return;
+        }
+      }
+      await fetchAndCacheBirdData(filter);
+    }
+
+    function wireControls() {
+      // Address search
+      const form = q('.birds-search-form') as HTMLFormElement;
+      const input = q('.birds-address-input') as HTMLInputElement;
+      const searchBtn = q('.birds-search-btn') as HTMLButtonElement;
+      const placeEl = q('.birds-place')!;
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const q = input.value.trim();
+        if (!q) return;
+
+        placeEl.textContent = 'Finding location…';
+        placeEl.className = 'birds-place';
+        searchBtn.disabled = true;
+
+        try {
+          const geo = await geocodeAddress(q);
+          if (!geo) {
+            placeEl.textContent = `Couldn't find "${q}". Try a city, ZIP code, or a more specific address.`;
+            placeEl.className = 'birds-place birds-place-error';
+            return;
+          }
+          currentLat = geo.lat;
+          currentLng = geo.lng;
+          currentPlaceName = shortPlaceName(geo.displayName);
+          placeEl.innerHTML = `Showing results within ${currentRadiusMiles} mi of <strong>${geo.displayName}</strong>`;
+          placeEl.className = 'birds-place';
+          redrawCenter(true);
+          await runAnalysis(false);
+        } catch (err) {
+          console.error(err);
+          placeEl.textContent = 'Location lookup failed. Please check your connection and try again.';
+          placeEl.className = 'birds-place birds-place-error';
+        } finally {
+          searchBtn.disabled = false;
+        }
+      });
+
+      // Radius slider — update the label live, re-run on release (debounced)
+      const slider = q('.birds-radius-slider') as HTMLInputElement;
+      const radiusValue = q('.birds-radius-value')!;
+      let radiusTimer: number | undefined;
+
+      slider.addEventListener('input', () => {
+        radiusValue.textContent = slider.value;
+      });
+
+      slider.addEventListener('change', () => {
+        currentRadiusMiles = parseInt(slider.value, 10);
+        redrawCenter(true);
+        window.clearTimeout(radiusTimer);
+        radiusTimer = window.setTimeout(() => runAnalysis(false), 250);
+      });
+
+      // Taxon filter — re-render from cache
+      q('.birds-taxon')!.addEventListener('change', (e) => {
+        const value = (e.target as HTMLSelectElement).value;
+        displayBirdData(value);
+      });
+
+      // Force refresh from the API for the current location
+      q('.birds-refresh')!.addEventListener('click', async () => {
+        await runAnalysis(true);
+      });
+
+      // "View Species Details" inside a Leaflet popup. Delegated from the map
+      // element so the click resolves against this instance's species data.
+      q('.birds-map').addEventListener('click', (e) => {
+        const btn = (e.target as HTMLElement).closest('.popup-species-btn') as HTMLElement | null;
+        if (btn?.dataset.species) openSpeciesModal(btn.dataset.species);
+      });
+    }
+
+    // Fetch fresh data from API and cache it
+    async function fetchAndCacheBirdData(currentFilter: string) {
+      const elLoading = q('.birds-loading')!;
+      const elError = q('.birds-error')!;
+
+      // Clear existing markers
+      markers.forEach((m) => map.removeLayer(m));
+      markers = [];
+
+      elLoading.style.display = 'block';
+      elError.style.display = 'none';
+
+      try {
+        // Always fetch ALL taxa to build complete cache
+        const allTaxonKeys = TAXON_KEYS.all;
+        const allOccurrences: any[] = [];
+
+        const GBIF_LIMIT = 300;
+        const MAX_PAGES = 4;
+
+        for (const taxonKey of allTaxonKeys) {
+          let offset = 0;
+          let page = 0;
+          let hasMore = true;
+
+          while (hasMore && page < MAX_PAGES) {
+            const params = new URLSearchParams({
+              taxonKey: String(taxonKey),
+              geoDistance: `${currentLat},${currentLng},${currentRadiusMiles}mi`,
+              hasCoordinate: 'true',
+              hasGeospatialIssue: 'false',
+              limit: String(GBIF_LIMIT),
+              offset: String(offset),
+              year: `${new Date().getFullYear() - 5},${new Date().getFullYear()}`,
+            });
+
+            const data = await fetchJsonWithRetry(
+              `https://api.gbif.org/v1/occurrence/search?${params}`
+            );
+            allOccurrences.push(...data.results);
+
+            hasMore = data.endOfRecords === false && data.results.length === GBIF_LIMIT;
+            offset += GBIF_LIMIT;
+            page++;
+          }
+        }
+
+        // Filter to valid raptors
+        const validOccurrences = allOccurrences.filter(occ => {
+          if (!occ.decimalLatitude || !occ.decimalLongitude) return false;
+          if (!occ.order || !VALID_RAPTOR_ORDERS.includes(occ.order)) return false;
+          if (!occ.species && !occ.genericName) return false;
+          return true;
+        });
+
+        // Store in memory cache - only keep fields we need to reduce size
+        cachedOccurrences = validOccurrences.map(occ => ({
+          decimalLatitude: occ.decimalLatitude,
+          decimalLongitude: occ.decimalLongitude,
+          species: occ.species,
+          genericName: occ.genericName,
+          order: occ.order,
+          family: occ.family,
+          eventDate: occ.eventDate,
+          stateProvince: occ.stateProvince,
+          speciesKey: occ.speciesKey,
+          taxonKey: occ.taxonKey,
+        }));
+
+        // Build species data and fetch common names
+        speciesData.clear();
+        for (const occ of validOccurrences) {
+          const speciesName = occ.species || occ.genericName;
+          if (!speciesData.has(speciesName)) {
+            speciesData.set(speciesName, {
+              scientificName: speciesName,
+              vernacularName: '',
+              order: occ.order,
+              family: occ.family || 'Unknown',
+              count: 1,
+              gbifKey: occ.speciesKey || occ.taxonKey || 0,
+            });
+          } else {
+            speciesData.get(speciesName)!.count++;
+          }
+        }
+
+        // Fetch common names
+        await fetchMissingCommonNames();
+
+        // Cache species names for future use
+        cachedSpeciesNames = {};
+        speciesData.forEach((info, name) => {
+          if (info.vernacularName) {
+            cachedSpeciesNames[name] = info.vernacularName;
+          }
+        });
+
+        // Save to IndexedDB under this location's key
+        const savedAt = await saveToCache(
+          cacheKey(currentLat, currentLng, currentRadiusMiles),
+          cachedOccurrences,
+          cachedSpeciesNames
+        );
+        if (savedAt) updateCacheStatus(savedAt, true);
+
+        elLoading.style.display = 'none';
+
+        // Display with current filter
+        displayBirdData(currentFilter);
+
+      } catch (err) {
+        elLoading.style.display = 'none';
+        elError.style.display = 'block';
+        elError.textContent = 'Bird data is temporarily unavailable (the GBIF service may be busy). Please try again in a moment.';
+        console.error(err);
+
+        // Clear the stale view so we don't show a previous location's results under the new heading.
+        markers.forEach((m) => map.removeLayer(m));
+        markers = [];
+        cachedOccurrences = [];
+        speciesData.clear();
+        const gridEl = q('.birds-species-grid');
+        if (gridEl) gridEl.innerHTML = '';
+        const insightsEl = q('.birds-insights');
+        if (insightsEl) insightsEl.style.display = 'none';
+        q('.birds-count')!.textContent = '0 sightings';
+        q('.birds-species-count')!.textContent = '0 species';
+      }
+    }
+
+    // Display data from cache, filtered by taxon
+    function displayBirdData(taxonFilter: string) {
+      const L = (window as any).L;
+      const elLoading = q('.birds-loading')!;
+      const elCount = q('.birds-count')!;
+      const elSpecies = q('.birds-species-count')!;
+
+      elLoading.style.display = 'none';
+
+      // Clear existing markers
+      markers.forEach((m) => map.removeLayer(m));
+      markers = [];
+
+      if (cachedOccurrences.length === 0) {
+        elCount.textContent = '0 sightings';
+        elSpecies.textContent = '0 species';
+        return;
+      }
+
+      // Filter by selected taxon
+      const taxonKeys = TAXON_KEYS[taxonFilter as keyof typeof TAXON_KEYS];
+      const orderMap: Record<number, string> = {
+        7191147: 'Accipitriformes',
+        7191407: 'Falconiformes',
+        1450: 'Strigiformes',
+      };
+      const allowedOrders = taxonKeys.map(k => orderMap[k]);
+
+      const filteredOccurrences = cachedOccurrences.filter(occ =>
+        allowedOrders.includes(occ.order)
+      );
+
+      // Rebuild species data for filtered view
+      speciesData.clear();
+      for (const occ of filteredOccurrences) {
+        const speciesName = occ.species || occ.genericName;
+
+        if (speciesData.has(speciesName)) {
+          speciesData.get(speciesName)!.count++;
+        } else {
+          speciesData.set(speciesName, {
+            scientificName: speciesName,
+            vernacularName: cachedSpeciesNames[speciesName] || '',
+            order: occ.order,
+            family: occ.family || 'Unknown',
+            count: 1,
+            gbifKey: occ.speciesKey || occ.taxonKey || 0,
+          });
+        }
+
+        // Create marker
+        const marker = L.circleMarker([occ.decimalLatitude, occ.decimalLongitude], {
+          radius: 6,
+          fillColor: getColorForOrder(occ.order),
+          color: mapToken('--map-marker-stroke', '#fff'),
+          weight: 1,
+          opacity: 1,
+          fillOpacity: 0.8,
+        });
+
+        const date = occ.eventDate
+          ? new Date(occ.eventDate).toLocaleDateString()
+          : 'Date unknown';
+
+        marker.bindPopup(`
+          <strong>${speciesName}</strong><br>
+          Order: ${occ.order}<br>
+          Date: ${date}<br>
+          ${occ.stateProvince ? `Location: ${occ.stateProvince}<br>` : ''}
+          <button class="popup-species-btn" data-species="${escapeAttr(speciesName)}">View Species Details</button>
+        `);
+
+        marker.addTo(map);
+        markers.push(marker);
+      }
+
+      // Render species list + area insights
+      renderSpeciesList();
+      renderInsights(filteredOccurrences.length);
+
+      elCount.textContent = `${filteredOccurrences.length} sightings`;
+      elSpecies.textContent = `${speciesData.size} species`;
+    }
+
+    // Plain-language summary panel above the species grid.
+    function renderInsights(totalSightings: number) {
+      const el = q('.birds-insights');
+      if (!el) return;
+      el.style.display = 'block';
+
+      const entries = Array.from(speciesData.entries())
+        .filter(([name, info]) => name !== 'Unknown' && info.order !== 'Unknown')
+        .sort((a, b) => b[1].count - a[1].count);
+
+      if (entries.length === 0) {
+        el.innerHTML = `<p class="birds-insights-lead">No birds of prey were reported within ${currentRadiusMiles} miles of <strong>${currentPlaceName}</strong> in the last five years. Try widening the radius or searching a different place.</p>`;
+        return;
+      }
+
+      const nameOf = ([name, info]: [string, SpeciesInfo]) => info.vernacularName || name;
+      const top = entries[0];
+      const rare = entries[entries.length - 1];
+
+      const orders: Record<string, number> = { Accipitriformes: 0, Falconiformes: 0, Strigiformes: 0 };
+      entries.forEach(([, info]) => {
+        if (orders[info.order] !== undefined) orders[info.order]++;
+      });
+
+      // Only call out a "rare find" when it's genuinely uncommon relative to the top species.
+      const showRare = rare[0] !== top[0] && rare[1].count <= Math.max(2, top[1].count * 0.1);
+      const rareSentence = showRare
+        ? ` A rarer find here is <strong>${nameOf(rare)}</strong>, with just ${rare[1].count} ${rare[1].count === 1 ? 'report' : 'reports'}.`
+        : '';
+
+      el.innerHTML = `
+        <div class="birds-insights-grid">
+          <div class="insight-stat"><span class="insight-num">${entries.length}</span><span class="insight-label">species</span></div>
+          <div class="insight-stat"><span class="insight-num">${totalSightings}</span><span class="insight-label">sightings</span></div>
+          <div class="insight-stat"><span class="insight-num">${currentRadiusMiles}</span><span class="insight-label">mile radius</span></div>
+        </div>
+        <p class="birds-insights-lead">
+          Within ${currentRadiusMiles} miles of <strong>${currentPlaceName}</strong>, observers have logged
+          <strong>${entries.length}</strong> ${entries.length === 1 ? 'species' : 'species'} of birds of prey.
+          The one you're most likely to see is <strong>${nameOf(top)}</strong>
+          (${top[1].count} ${top[1].count === 1 ? 'report' : 'reports'}).${rareSentence}
+        </p>
+        <div class="birds-insights-breakdown">
+          <span><span class="dot-inline" style="background:${getColorForOrder('Accipitriformes')}"></span> ${orders.Accipitriformes} hawk &amp; eagle ${orders.Accipitriformes === 1 ? 'species' : 'species'}</span>
+          <span><span class="dot-inline" style="background:${getColorForOrder('Falconiformes')}"></span> ${orders.Falconiformes} falcon ${orders.Falconiformes === 1 ? 'species' : 'species'}</span>
+          <span><span class="dot-inline" style="background:${getColorForOrder('Strigiformes')}"></span> ${orders.Strigiformes} owl ${orders.Strigiformes === 1 ? 'species' : 'species'}</span>
+        </div>
+      `;
+    }
+
+    // Fetch common names for species missing vernacularName
+    // Uses multiple sources: Wikipedia (best for English), iNaturalist, then GBIF
+    async function fetchMissingCommonNames() {
+      const speciesNeedingNames = Array.from(speciesData.entries())
+        .filter(([_, info]) => !info.vernacularName)
+        .slice(0, 50);
+
+      const fetchPromises = speciesNeedingNames.map(async ([name, info]) => {
+        try {
+          // 1. Try Wikipedia first - article titles are often common English names
+          const wikiTitle = name.replace(/ /g, '_');
+          const wikiResponse = await fetch(
+            `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTitle)}`
+          );
+          if (wikiResponse.ok) {
+            const wikiData = await wikiResponse.json();
+            // Wikipedia often redirects scientific names to common name articles
+            // Check if title differs from scientific name and looks like English
+            const pageTitle = wikiData.title;
+            if (pageTitle &&
+                pageTitle.toLowerCase() !== name.toLowerCase() &&
+                /^[A-Za-z\s\-']+$/.test(pageTitle)) {
+              info.vernacularName = pageTitle;
+              return;
+            }
+          }
+
+          // 2. Try iNaturalist - use both english_common_name and preferred_common_name
+          const inatResponse = await fetch(
+            `https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(name)}&rank=species&per_page=1&locale=en`
+          );
+          if (inatResponse.ok) {
+            const inatData = await inatResponse.json();
+            const taxon = inatData.results?.[0];
+            const commonName = taxon?.english_common_name || taxon?.preferred_common_name;
+            if (commonName && /^[A-Za-z\s\-']+$/.test(commonName)) {
+              info.vernacularName = commonName;
+              return;
+            }
+          }
+
+          // 3. Last resort: GBIF with strict ASCII check
+          if (info.gbifKey) {
+            const response = await fetch(
+              `https://api.gbif.org/v1/species/${info.gbifKey}/vernacularNames?limit=20`
+            );
+            if (response.ok) {
+              const data = await response.json();
+              const englishName = data.results?.find(
+                (n: any) => (n.language === 'eng' || n.language === 'en') &&
+                            /^[A-Za-z\s\-']+$/.test(n.vernacularName)
+              );
+              if (englishName?.vernacularName) {
+                info.vernacularName = englishName.vernacularName;
+              }
+            }
+          }
+        } catch {
+          // Ignore errors for individual species lookups
+        }
+      });
+
+      await Promise.all(fetchPromises);
+    }
+
+    /* ── Species Grid ── */
+    function renderSpeciesList() {
+      const gridEl = q('.birds-species-grid')!;
+      const countLabel = q('.birds-species-count-label')!;
+      gridEl.innerHTML = '';
+
+      // Filter out unknown and sort by count descending
+      const filtered = Array.from(speciesData.entries())
+        .filter(([name, info]) => name !== 'Unknown' && info.order !== 'Unknown')
+        .sort((a, b) => b[1].count - a[1].count);
+
+      countLabel.textContent = `(${filtered.length})`;
+
+      const maxCount = filtered.length > 0 ? filtered[0][1].count : 0;
+
+      for (const [name, info] of filtered) {
+        const displayName = info.vernacularName || name;
+        const raptor = getRaptorInfo(name, info.family);
+        const freq = frequencyLabel(info.count, maxCount);
+        const sizeText = raptor
+          ? `${capitalize(raptor.sizeClass)} · ${raptor.wingspanCm[0]}–${raptor.wingspanCm[1]} cm wingspan`
+          : '';
+
+        const card = document.createElement('div');
+        card.className = 'species-card';
+        card.innerHTML = `
+          <div class="species-card-color" style="background: ${getColorForOrder(info.order)}"></div>
+          <div class="species-card-content">
+            <span class="species-card-common">${displayName}</span>
+            <span class="species-card-scientific">${name}</span>
+            ${sizeText ? `<span class="species-card-size">${sizeText}</span>` : ''}
+          </div>
+          <div class="species-card-meta">
+            <span class="species-freq ${freq.cls}">${freq.text}</span>
+            <span class="species-card-count">${info.count} ${info.count === 1 ? 'report' : 'reports'}</span>
+          </div>
+        `;
+        card.addEventListener('click', () => openSpeciesModal(name));
+        gridEl.appendChild(card);
+      }
+    }
+
+    /* ── Species Modal ── */
+    async function openSpeciesModal(speciesName: string) {
+      const modal = document.getElementById('species-modal')!;
+      const loading = document.getElementById('species-modal-loading')!;
+      const body = document.getElementById('species-modal-body')!;
+
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      loading.style.display = 'block';
+      body.style.display = 'none';
+
+      const info = speciesData.get(speciesName);
+      if (!info) {
+        loading.textContent = 'Species not found';
+        return;
+      }
+
+      try {
+        // Fetch data from both APIs in parallel
+        const [wikiData, inatData] = await Promise.all([
+          fetchWikipediaData(speciesName),
+          fetchINaturalistData(speciesName),
+        ]);
+
+        // Populate modal
+        document.getElementById('species-modal-name')!.textContent = speciesName;
+        document.getElementById('species-modal-common')!.textContent = info.vernacularName || wikiData.commonName || inatData.commonName || '';
+        document.getElementById('species-modal-order')!.textContent = info.order;
+        document.getElementById('species-modal-family')!.textContent = info.family;
+        document.getElementById('species-modal-sightings')!.textContent = `${info.count} sightings`;
+
+        // Description from Wikipedia
+        const descEl = document.getElementById('species-modal-description')!;
+        descEl.innerHTML = wikiData.extract || '<em>No description available.</em>';
+
+        // Curated enrichment: how-to-spot notes, wingspan visual, seasonality
+        const raptor = getRaptorInfo(speciesName, info.family);
+        renderFieldNotes(raptor);
+        renderWingspanBar(raptor);
+        renderSeasonality(speciesName);
+
+        // Images - prefer iNaturalist, fallback to Wikipedia
+        const mainImage = document.getElementById('species-modal-image') as HTMLImageElement;
+        const thumbnails = document.getElementById('species-modal-thumbnails')!;
+        thumbnails.innerHTML = '';
+
+        // iNaturalist large photos lead — Wikipedia appended as supplement only
+        const allPhotos = [...inatData.photos];
+        if (wikiData.image && !allPhotos.includes(wikiData.image)) {
+          allPhotos.push(wikiData.image);
+        }
+
+        if (allPhotos.length > 0) {
+          mainImage.src = allPhotos[0];
+          mainImage.alt = speciesName;
+          mainImage.style.display = 'block';
+
+          // Add thumbnails if multiple photos
+          if (allPhotos.length > 1) {
+            allPhotos.slice(0, 6).forEach((url, idx) => {
+              const thumb = document.createElement('img');
+              thumb.src = url;
+              thumb.alt = `${speciesName} photo ${idx + 1}`;
+              thumb.className = idx === 0 ? 'active' : '';
+              thumb.addEventListener('click', () => {
+                mainImage.src = url;
+                thumbnails.querySelectorAll('img').forEach(t => t.classList.remove('active'));
+                thumb.classList.add('active');
+              });
+              thumbnails.appendChild(thumb);
+            });
+          }
+        } else {
+          mainImage.style.display = 'none';
+        }
+
+        // Links
+        const wikiTitle = speciesName.replace(/ /g, '_');
+        (document.getElementById('species-link-wikipedia') as HTMLAnchorElement).href =
+          `https://en.wikipedia.org/wiki/${wikiTitle}`;
+        (document.getElementById('species-link-inaturalist') as HTMLAnchorElement).href =
+          `https://www.inaturalist.org/taxa/search?q=${encodeURIComponent(speciesName)}`;
+        (document.getElementById('species-link-gbif') as HTMLAnchorElement).href =
+          `https://www.gbif.org/species/${info.gbifKey}`;
+
+        loading.style.display = 'none';
+        body.style.display = 'flex';
+      } catch (err) {
+        console.error('Error loading species data:', err);
+        loading.textContent = 'Failed to load species information.';
+      }
+    }
+
+    // Seasonality: when this species is reported near the current location.
+    function renderSeasonality(speciesName: string) {
+      const el = document.getElementById('species-modal-seasonality')!;
+      const months = new Array(12).fill(0);
+      let dated = 0;
+
+      for (const occ of cachedOccurrences) {
+        const nm = occ.species || occ.genericName;
+        if (nm !== speciesName || !occ.eventDate) continue;
+        const m = new Date(occ.eventDate).getMonth();
+        if (!isNaN(m)) {
+          months[m]++;
+          dated++;
+        }
+      }
+
+      // Too few dated records to say anything meaningful.
+      if (dated < 4) {
+        el.innerHTML = '';
+        return;
+      }
+
+      const max = Math.max(...months);
+      const short = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+      const full = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+      const peaks = months
+        .map((v, i) => ({ v, i }))
+        .filter((o) => o.v > 0 && o.v >= max * 0.85)
+        .map((o) => full[o.i]);
+
+      const bars = months
+        .map(
+          (v, i) => `
+          <div class="season-bar-wrap" title="${full[i]}: ${v} ${v === 1 ? 'report' : 'reports'}">
+            <div class="season-bar" style="height:${max ? (v / max) * 100 : 0}%"></div>
+            <span class="season-bar-label">${short[i]}</span>
+          </div>`
+        )
+        .join('');
+
+      el.innerHTML = `
+        <h4 class="species-block-title">When it's reported near ${currentPlaceName}</h4>
+        <div class="season-chart">${bars}</div>
+        <p class="species-block-caption">Most reported in ${formatPeaks(peaks)}. Based on ${dated} dated ${dated === 1 ? 'sighting' : 'sightings'} — counts reflect when people report birds, not only when the birds are present.</p>
+      `;
+    }
+
+    initMap();
+  }
+
+  document
+    .querySelectorAll<HTMLElement>('[data-birds-map]')
+    .forEach((root) => createBirdsMap(root));
+</script>
 <style is:global>
-  #birds-map-container {
+  .birds-map-container {
     margin: 2rem 0;
   }
 
@@ -1201,7 +1261,7 @@
     flex-wrap: wrap;
   }
 
-  #birds-taxon {
+  .birds-taxon {
     padding: 0.5rem 0.75rem;
     border: 1px solid var(--color-border);
     border-radius: 0;
@@ -1214,12 +1274,12 @@
     appearance: auto;
   }
 
-  #birds-taxon:focus {
+  .birds-taxon:focus {
     outline: none;
     border-color: var(--color-text);
   }
 
-  #birds-refresh {
+  .birds-refresh {
     padding: 0.5rem 1rem;
     background: var(--sec, var(--color-accent));
     color: var(--color-bg);
@@ -1233,7 +1293,7 @@
     transition: background-color 0.15s, border-color 0.15s;
   }
 
-  #birds-refresh:hover {
+  .birds-refresh:hover {
     background: var(--sec, var(--color-accent-hover));
     border-color: var(--sec, var(--color-accent-hover));
   }
@@ -1262,7 +1322,7 @@
     border-color: var(--color-text);
   }
 
-  #birds-search-btn {
+  .birds-search-btn {
     padding: 0.5rem 1.25rem;
     background: var(--sec, var(--color-accent));
     color: var(--color-bg);
@@ -1276,12 +1336,12 @@
     transition: background-color 0.15s, border-color 0.15s;
   }
 
-  #birds-search-btn:hover {
+  .birds-search-btn:hover {
     background: var(--sec, var(--color-accent-hover));
     border-color: var(--sec, var(--color-accent-hover));
   }
 
-  #birds-search-btn:disabled {
+  .birds-search-btn:disabled {
     opacity: 0.5;
     cursor: default;
   }
@@ -1300,12 +1360,12 @@
     letter-spacing: 0.02em;
   }
 
-  .birds-radius label #birds-radius-value {
+  .birds-radius label .birds-radius-value {
     color: var(--color-text);
     font-weight: 500;
   }
 
-  #birds-radius-slider {
+  .birds-radius-slider {
     width: 100%;
     max-width: 340px;
     accent-color: var(--sec, var(--color-accent));
@@ -1416,7 +1476,7 @@
 
   /* Framed so the light panel reads as a deliberate lit instrument inset into
      the dark page, rather than an untreated bright slab. */
-  #birds-map {
+  .birds-map {
     height: 600px;
     border: 1px solid var(--color-border);
     border-radius: 10px;
@@ -2023,7 +2083,7 @@
   }
 
   @media (max-width: 640px) {
-    #birds-map {
+    .birds-map {
       height: 420px;
     }
 
@@ -2031,7 +2091,7 @@
       flex-direction: column;
     }
 
-    #birds-taxon {
+    .birds-taxon {
       width: 100%;
     }
 
