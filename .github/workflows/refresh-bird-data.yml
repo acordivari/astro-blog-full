@@ -1,0 +1,67 @@
+name: Refresh bird data
+
+# Re-runs the GBIF fetch that backs the default maps on /birds/ and commits the
+# result. Pushing is what deploys it: Netlify builds on every push to main, so the
+# refreshed JSON goes live without the build itself ever having to call GBIF.
+#
+# Monthly is deliberate — the counts are 5-year rolling windows in the hundreds of
+# thousands, so week-to-week drift is a fraction of a percent and daily runs would
+# produce deploys nobody can see the effect of.
+
+on:
+  schedule:
+    # 09:41 UTC on the 8th. Off the hour and off the 1st on purpose: GitHub drops
+    # or delays scheduled jobs that pile up on popular times.
+    - cron: '41 9 8 * *'
+  workflow_dispatch: # so you can force a refresh from the Actions tab
+
+permissions:
+  contents: write
+
+# Never let two refreshes race each other into a push conflict.
+concurrency:
+  group: refresh-bird-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    # GBIF throttles hard when it is busy, and the client retries with backoff.
+    # This bounds a bad day rather than letting the job hang for hours.
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Exits non-zero only if EVERY location fails, which is the case worth being
+      # told about. A single failed location leaves that file untouched and the
+      # run still succeeds.
+      - name: Fetch fresh GBIF data
+        run: npm run birds:refresh
+
+      # In practice this commits every run: the payload carries a `fetchedAt`
+      # stamp, which is what the page shows as "GBIF data from <date>", so
+      # refreshing it is the point. The guard is a safety net for the case where
+      # the script wrote nothing at all.
+      - name: Commit if the data changed
+        run: |
+          if git diff --quiet -- public/data/birds; then
+            echo "No data written — nothing to commit."
+            exit 0
+          fi
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/birds
+          git commit -m "chore(birds): refresh GBIF datasets"
+          git push
+
+          echo "### Bird data refreshed" >> "$GITHUB_STEP_SUMMARY"
+          git show --stat --oneline HEAD >> "$GITHUB_STEP_SUMMARY"
