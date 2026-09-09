@@ -17,8 +17,18 @@ import BirdsSpeciesModal from '../components/BirdsSpeciesModal.astro';
     </aside>
   </article>
 
-  <BirdsOfPreyMap lat={37.7749} lng={-122.4194} place="San Francisco, CA" />
-  <BirdsOfPreyMap lat={40.015} lng={-105.2705} place="Boulder, CO" />
+  <BirdsOfPreyMap
+    lat={37.7749}
+    lng={-122.4194}
+    place="San Francisco, CA"
+    seed="/data/birds/san-francisco-ca.json"
+  />
+  <BirdsOfPreyMap
+    lat={40.015}
+    lng={-105.2705}
+    place="Boulder, CO"
+    seed="/data/birds/boulder-co.json"
+  />
 
   <BirdsSpeciesModal />
 
