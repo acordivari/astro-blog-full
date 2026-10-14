@@ -36,7 +36,7 @@ export async function GET(context: APIContext) {
   return rss({
     title: 'Andrew Cordivari',
     description:
-      'Writing at the intersections of life, technology, nature, and awareness — engineering journal, projects, essays, and reviews.',
+      'Thoughts, reflections, nature, my life — engineering journal, projects, essays, and reviews.',
     site: context.site!,
     items,
   });

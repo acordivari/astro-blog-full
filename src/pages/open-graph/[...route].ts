@@ -23,7 +23,7 @@ const sections = {
 const pages: Record<string, CardData> = {
   index: {
     title: 'Andrew Cordivari',
-    description: 'Intersections of life, technology, nature, and awareness.',
+    description: 'Thoughts, reflections, nature, my life.',
   },
   about: { title: 'About', description: 'thisisandrew.me' },
   birds: { title: 'Birds of Prey', description: 'Raptor sightings near Boulder, Colorado · thisisandrew.me' },
